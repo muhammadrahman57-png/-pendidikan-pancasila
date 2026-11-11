@@ -1,1262 +1,554 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lompat Pancasila – Kuis Benar atau Salah Kelas VI</title>
-<style>
-:root{--merah:#d62828;--merah-tua:#8e1118;--hijau:#1b9e4b;--emas:#f4b400;--krem:#fff8e7;--tinta:#2b1b0e}
-*{box-sizing:border-box}
-html,body{margin:0;height:100%;overflow:hidden;font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;color:var(--tinta);background:radial-gradient(circle at 50% 30%,#a3141c,#4a0a0f)}
-button{font-family:inherit;cursor:pointer}
-#cam{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:none;z-index:0;background:#000}
-body.camon #cam{display:block}
-#ov{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:30}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lompat Benar-Salah - PPKn Kelas 6 SD</title>
+    <!-- Google Fonts & Tailwind CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- MediaPipe Pose Landmarker Libraries via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
 
-.screen{position:fixed;inset:0;display:none;z-index:2}
-.screen.on{display:block}
-#home.on,#count.on,#result.on{display:flex}
-.overlay{position:fixed;inset:0;display:none;z-index:20;align-items:center;justify-content:center}
-.overlay.on{display:flex}
+    <!-- Canvas Confetti untuk Perayaan Skor Akhir -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-/* ---------- Beranda ---------- */
-#home{align-items:center;justify-content:center;background:linear-gradient(135deg,#b3141d,#7a0f16 55%,#f4b400 160%);padding:12px;overflow:auto}
-.homebox{background:var(--krem);border-radius:26px;padding:22px 28px;max-width:880px;width:100%;max-height:96vh;overflow:auto;box-shadow:0 14px 50px rgba(0,0,0,.45);border:5px solid var(--emas);text-align:center}
-.homebox h1{margin:4px 0 0;font-size:clamp(30px,5vw,54px);color:var(--merah);letter-spacing:1px}
-.homebox .sub{margin:2px 0 12px;font-weight:600;color:#6b4a1d}
-.lbl{font-weight:800;margin:10px 0 6px;text-align:left}
-#pname{width:100%;padding:10px 14px;font-size:18px;border-radius:12px;border:3px solid #e2c27a;background:#fff}
-.seg{display:flex;gap:8px;flex-wrap:wrap}
-.seg button{flex:1;min-width:120px;padding:10px 12px;font-size:17px;font-weight:800;border-radius:999px;border:3px solid var(--merah);background:#fff;color:var(--merah)}
-.seg button.on{background:var(--merah);color:#fff}
-.best{margin-top:8px;font-size:14px;color:#6b4a1d;text-align:left;background:#fff2cc;border-radius:12px;padding:8px 12px}
-.how{margin:12px 0;text-align:left;background:#fff;border-radius:14px;padding:10px 16px;border:2px dashed #e2c27a;font-size:15px;line-height:1.45}
-.how b.k{color:var(--hijau)}.how b.s{color:var(--merah)}
-.btnrow{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:10px}
-.big{padding:14px 30px;font-size:22px;font-weight:900;border:none;border-radius:16px;background:var(--hijau);color:#fff;box-shadow:0 6px 0 #0f6a31}
-.big:active{transform:translateY(3px);box-shadow:0 3px 0 #0f6a31}
-.alt{padding:14px 22px;font-size:18px;font-weight:800;border:3px solid var(--merah);border-radius:16px;background:#fff;color:var(--merah)}
-.mini{padding:7px 14px;font-size:15px;font-weight:700;border:2px solid #b99a52;border-radius:12px;background:#fff;color:#6b4a1d}
-.privasi{margin-top:10px;font-size:13px;color:#6b4a1d}
-
-/* ---------- Kalibrasi, galat, jeda ---------- */
-#calib{background:rgba(0,0,0,.28);align-items:flex-start;justify-content:center}
-#calLine{position:absolute;top:0;bottom:0;left:50%;width:0;border-left:3px dashed rgba(255,255,255,.75)}
-.calpanel{position:relative;margin-top:14px;background:rgba(255,248,231,.97);border:4px solid var(--emas);border-radius:20px;padding:14px 22px;width:min(680px,94%);text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.4)}
-.calpanel h2{margin:0 0 4px;color:var(--merah)}
-#calMsg{font-size:20px;font-weight:800;min-height:28px}
-.pbar{height:18px;background:#e7d7ad;border-radius:999px;overflow:hidden;margin:10px 0}
-#calFill{height:100%;width:0;background:linear-gradient(90deg,#f4b400,#1b9e4b)}
-.tips{margin:6px 0 10px;padding-left:22px;text-align:left;font-size:14px;line-height:1.5}
-#err,#pauseOv{background:rgba(0,0,0,.6)}
-.errbox{background:var(--krem);border:4px solid var(--emas);border-radius:20px;padding:22px 28px;max-width:560px;width:92%;text-align:center}
-.errbox h2{margin:0 0 8px;color:var(--merah)}
-.errbox p{font-size:18px;line-height:1.45}
-.pausebox{color:#fff;text-align:center}
-.pausebox h2{font-size:clamp(40px,7vw,90px);margin:0 0 12px}
-
-/* ---------- Hitung mundur ---------- */
-#count{align-items:center;justify-content:center;background:rgba(0,0,0,.45);text-align:center;color:#fff}
-#cdInfo{font-size:clamp(24px,4vw,48px);font-weight:900;text-shadow:0 3px 10px #000}
-#cdNum{font-size:clamp(120px,26vw,340px);font-weight:900;line-height:1;color:var(--emas);text-shadow:0 8px 24px #000}
-#cdTip{font-size:clamp(18px,2.6vw,32px);font-weight:700;text-shadow:0 3px 8px #000}
-
-/* ---------- Permainan: layar dibagi dua ---------- */
-.zone{position:absolute;top:0;bottom:0;width:50%;z-index:1;transition:opacity .2s,background .2s}
-#zoneL{left:0;background:rgba(214,40,40,.40)}
-#zoneR{right:0;background:rgba(27,158,75,.40)}
-.zlabel{position:absolute;bottom:7%;width:76%;text-align:center;color:#fff;font-weight:900;text-shadow:0 3px 10px rgba(0,0,0,.75),0 0 3px rgba(0,0,0,.9)}
-#zoneL .zlabel{left:0}#zoneR .zlabel{right:0}
-.zlabel .big2{font-size:clamp(28px,5.2vw,84px);line-height:1.05}
-.zlabel .sm{font-size:clamp(15px,1.9vw,30px);margin-top:6px}
-.stamp{position:absolute;top:34%;width:76%;text-align:center;font-size:clamp(80px,15vw,230px);font-weight:900;color:#fff;text-shadow:0 6px 20px rgba(0,0,0,.7);opacity:0;transform:scale(.4)}
-#zoneL .stamp{left:0}#zoneR .stamp{right:0}
-.stamp.show{opacity:1;transform:scale(1);transition:transform .35s cubic-bezier(.2,1.6,.4,1),opacity .2s}
-#game.gs-gate .zone{opacity:.30}
-#game.hotL #zoneL,#game.hotR #zoneR{background-blend-mode:normal;filter:brightness(1.35) saturate(1.2)}
-#game.hotL #zoneR,#game.hotR #zoneL{opacity:.6}
-#band{position:absolute;top:0;bottom:0;left:38%;width:24%;z-index:2;background:rgba(244,180,0,.22);border-left:4px dashed rgba(255,214,64,.95);border-right:4px dashed rgba(255,214,64,.95)}
-#band .t{position:absolute;bottom:7%;width:100%;text-align:center;font-weight:900;color:#ffe27a;font-size:clamp(18px,3vw,46px);text-shadow:0 3px 10px #000,0 0 3px #000}
-#band.ok{background:rgba(244,180,0,.45)}
-#game.gs-gate #band{animation:pulse 1.2s ease-in-out infinite}
-@keyframes pulse{50%{background:rgba(244,180,0,.5)}}
-#divider{position:absolute;top:0;bottom:0;left:calc(50% - 3px);width:6px;z-index:2;background:rgba(255,255,255,.9);box-shadow:0 0 10px rgba(0,0,0,.5)}
-#marker{position:absolute;top:58%;left:50%;transform:translate(-50%,-50%);z-index:4;width:clamp(64px,8vw,120px);height:clamp(64px,8vw,120px);border-radius:50%;background:var(--emas);border:5px solid #fff;color:#5a3a00;font-weight:900;font-size:clamp(14px,1.8vw,26px);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.55)}
-#hud{position:absolute;top:10px;left:10px;z-index:6;background:rgba(255,248,231,.95);border:3px solid var(--emas);border-radius:14px;padding:8px 14px;font-weight:800;font-size:clamp(14px,1.6vw,24px);line-height:1.35}
-#hud b{color:var(--merah)}
-#hudR{position:absolute;top:10px;right:10px;z-index:6;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:21%}
-#hudR button,#hudR select{padding:6px 9px;font-size:16px;border-radius:10px;border:2px solid var(--emas);background:rgba(255,248,231,.95);font-weight:700}
-#qcard{position:absolute;left:24%;width:52%;top:10px;z-index:5;background:rgba(255,248,231,.97);border:4px solid var(--emas);border-radius:20px;padding:12px 18px;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.4)}
-.qmeta{display:flex;justify-content:space-between;gap:8px;font-size:clamp(12px,1.2vw,18px);font-weight:800;color:#6b4a1d;margin-bottom:6px}
-.badge{background:var(--merah);color:#fff;border-radius:999px;padding:1px 12px}
-#qText{font-size:clamp(18px,2.2vw,36px);font-weight:800;line-height:1.3}
-.tbar{height:16px;background:#e7d7ad;border-radius:999px;overflow:hidden;margin-top:10px}
-#tFill{height:100%;width:100%;background:var(--hijau)}
-#tLabel{font-size:clamp(12px,1.2vw,18px);font-weight:800;margin-top:3px}
-#qGate{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}
-#gNum{font-size:clamp(14px,1.5vw,22px);font-weight:800;color:#6b4a1d;width:100%}
-.gmsg{font-size:clamp(22px,3vw,46px);font-weight:900;color:var(--merah)}
-#ring{width:clamp(60px,6vw,96px);height:clamp(60px,6vw,96px)}
-#ringFg{stroke-dasharray:264;stroke-dashoffset:264}
-#qFb{margin-top:8px;border-top:3px dashed #e2c27a;padding-top:8px}
-#fbHead{font-size:clamp(20px,2.6vw,42px);font-weight:900}
-#fbHead.ok{color:var(--hijau)}#fbHead.no{color:var(--merah)}
-#fbSub{font-size:clamp(15px,1.8vw,28px);font-weight:800;margin-top:2px}
-#fbExp{font-size:clamp(14px,1.6vw,26px);line-height:1.35;margin-top:4px}
-#fbHint{font-size:clamp(12px,1.3vw,20px);font-weight:800;color:#6b4a1d;margin-top:6px}
-#lostMsg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:7;background:rgba(0,0,0,.8);color:#fff;font-weight:900;font-size:clamp(18px,2.6vw,40px);padding:16px 26px;border-radius:18px;text-align:center;display:none}
-#plus{position:absolute;left:50%;top:48%;z-index:7;font-size:clamp(40px,7vw,110px);font-weight:900;color:var(--emas);text-shadow:0 4px 14px #000;opacity:0;transform:translate(-50%,0)}
-#plus.go{animation:plus 1.4s ease-out forwards}
-@keyframes plus{0%{opacity:0;transform:translate(-50%,20px) scale(.6)}20%{opacity:1;transform:translate(-50%,0) scale(1.1)}100%{opacity:0;transform:translate(-50%,-90px) scale(1)}}
-#kbBtns{position:absolute;bottom:2%;left:50%;transform:translateX(-50%);z-index:8;display:none;gap:10px}
-#kbBtns button{padding:12px 20px;font-size:18px;font-weight:900;border-radius:14px;border:3px solid #fff;color:#fff}
-#kbL{background:var(--merah)}#kbC{background:#b78500}#kbR{background:var(--hijau)}
-
-/* ---------- Hasil ---------- */
-#result{align-items:flex-start;justify-content:center;background:linear-gradient(135deg,#a3141c,#4a0a0f);overflow:auto;padding:14px}
-.resbox{background:var(--krem);border:5px solid var(--emas);border-radius:24px;padding:20px 26px;width:min(900px,100%);text-align:center;position:relative;z-index:2}
-.resbox h1{margin:0;color:var(--merah);font-size:clamp(28px,4.5vw,48px)}
-.pred{font-size:clamp(22px,3.4vw,40px);font-weight:900;color:var(--hijau);margin:4px 0}
-.skor{font-size:clamp(46px,9vw,100px);font-weight:900;color:var(--merah);line-height:1.05}
-.skormax{font-weight:800;color:#6b4a1d}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
-.stat{background:#fff;border:2px solid #e2c27a;border-radius:14px;padding:8px}
-.stat b{display:block;font-size:26px;color:var(--merah)}
-.sec{text-align:left;margin-top:14px}
-.sec h3{margin:0 0 6px;color:var(--merah-tua)}
-.trow{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:15px;font-weight:700}
-.trow .nm{flex:0 0 42%}
-.trow .bar{flex:1;height:14px;background:#e7d7ad;border-radius:999px;overflow:hidden}
-.trow .bar i{display:block;height:100%;background:var(--hijau)}
-.trow .pc{flex:0 0 62px;text-align:right}
-.rev{background:#fff;border-left:6px solid var(--merah);border-radius:10px;padding:8px 12px;margin:8px 0;font-size:15px;line-height:1.4}
-.rev small{color:#6b4a1d}
-#confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}
-.conf{position:absolute;top:-30px;width:10px;height:16px;opacity:.9;animation:fall linear forwards}
-@keyframes fall{to{transform:translateY(115vh) rotate(720deg)}}
-
-@media (max-width:900px){
-  #qcard{left:3%;width:94%;top:56px}
-  #hudR{max-width:60%}
-  #hud{padding:4px 10px}
-}
-</style>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .mirror-canvas {
+            transform: scaleX(-1);
+        }
+        /* Glassmorphism visual styling */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .glass-dark {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .zone-active-left {
+            background-color: rgba(239, 68, 68, 0.35) !important;
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.6);
+        }
+        .zone-active-right {
+            background-color: rgba(34, 197, 94, 0.35) !important;
+            border-color: #22c55e !important;
+            box-shadow: 0 0 30px rgba(34, 197, 94, 0.6);
+        }
+        @keyframes pulse-zone {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        .pulse-anim {
+            animation: pulse-zone 1.5s infinite ease-in-out;
+        }
+    </style>
 </head>
-<body>
-<video id="cam" playsinline muted></video>
-<canvas id="ov"></canvas>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between overflow-x-hidden selection:bg-red-500 selection:text-white">
 
-<!-- BERANDA -->
-<section id="home" class="screen on">
-  <div class="homebox">
-    <div style="font-size:42px">🇮🇩</div>
-    <h1>Lompat Pancasila</h1>
-    <p class="sub">Kuis Benar atau Salah • Pendidikan Pancasila Kelas VI SD</p>
+    <!-- Top Navigation Header -->
+    <header class="w-full px-6 py-3 bg-slate-800/90 border-b border-slate-700 flex justify-between items-center z-50">
+        <div class="flex items-center space-x-3">
+            <span class="text-2xl">🇮🇩</span>
+            <div>
+                <h1 class="text-lg font-bold bg-gradient-to-r from-red-500 to-amber-400 bg-clip-text text-transparent">Lompat Benar-Salah</h1>
+                <p class="text-xs text-slate-400">Pendidikan Pancasila SD Kelas 6 (Kurikulum Merdeka)</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-3 text-sm">
+            <button id="btnSoundToggle" onclick="toggleAudio()" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 transition flex items-center gap-1 text-slate-200">
+                <span id="soundIcon">🔊</span> Suara
+            </button>
+            <button onclick="toggleFullscreen()" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 transition text-slate-200">
+                ⛶ Layar Penuh
+            </button>
+        </div>
+    </header>
 
-    <div class="lbl">Nama pemain (boleh dikosongkan)</div>
-    <input id="pname" maxlength="24" placeholder="Tulis namamu" autocomplete="off">
+    <!-- MAIN CONTAINER -->
+    <main class="flex-grow flex items-center justify-center p-4 relative">
 
-    <div class="lbl">Tingkat kesulitan</div>
-    <div class="seg" id="segLevel">
-      <button data-v="mudah" class="on">😀 Mudah</button>
-      <button data-v="sedang">🙂 Sedang</button>
-      <button data-v="campuran">🧠 Campuran (HOTS)</button>
+        <!-- ================= 1. MENU UTAMA / START SCREEN ================= -->
+        <section id="menuScreen" class="w-full max-w-4xl glass-dark rounded-3xl p-6 md:p-10 shadow-2xl space-y-6 relative overflow-hidden my-auto border border-slate-700">
+            <div class="text-center space-y-2">
+                <span class="bg-red-500/20 text-red-400 px-4 py-1 rounded-full text-xs font-semibold tracking-wider uppercase border border-red-500/30">MediaPembelajaran Interaktif Body Tracking</span>
+                <h2 class="text-3xl md:text-5xl font-black text-white tracking-wide">Kuis Edukasi Pancasila</h2>
+                <p class="text-slate-300 text-sm md:text-base max-w-2xl mx-auto">Uji pengetahuanmu dengan melompat atau berpindah ke <span class="text-emerald-400 font-bold">KANAN (BENAR)</span> atau ke <span class="text-rose-400 font-bold">KIRI (SALAH)</span> di depan kamera!</p>
+            </div>
+
+            <!-- Mode & Input Form -->
+            <div class="grid md:grid-cols-2 gap-6 bg-slate-800/60 p-5 rounded-2xl border border-slate-700/60">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-300 mb-1">Nama Pemain (Opsional)</label>
+                        <input type="text" id="playerName" placeholder="Masukkan namamu..." class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-red-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-300 mb-1">Pilih Tingkat Kesulitan</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button type="button" onclick="selectDifficulty('mudah')" id="btnDiffMudah" class="diff-btn py-2.5 px-2 rounded-xl text-xs md:text-sm font-bold border transition text-center bg-slate-700 border-slate-600 text-slate-300 hover:border-emerald-500">Mudah</button>
+                            <button type="button" onclick="selectDifficulty('sedang')" id="btnDiffSedang" class="diff-btn py-2.5 px-2 rounded-xl text-xs md:text-sm font-bold border transition text-center bg-slate-700 border-slate-600 text-slate-300 hover:border-amber-500">Sedang</button>
+                            <button type="button" onclick="selectDifficulty('hots')" id="btnDiffHots" class="diff-btn py-2.5 px-2 rounded-xl text-xs md:text-sm font-bold border transition text-center bg-emerald-600 border-emerald-400 text-white shadow-lg">HOTS</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-300 mb-1">Mode Kontrol Game</label>
+                        <select id="controlMode" class="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 text-sm focus:outline-none focus:border-red-500" onchange="handleControlModeChange()">
+                            <option value="camera">Kamera Web (Gerakan Tubuh)</option>
+                            <option value="keyboard">Keyboard / Tombol Layar (Fallback)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Cara Bermain & Petunjuk Gerakan -->
+                <div class="space-y-3 bg-slate-900/50 p-4 rounded-xl border border-slate-700/40">
+                    <h3 class="font-bold text-slate-200 text-sm flex items-center gap-2">
+                        <span>🎯</span> Petunjuk Cara Bermain:
+                    </h3>
+                    <div class="grid grid-cols-2 gap-3 text-center text-xs">
+                        <div class="p-3 bg-rose-950/40 border border-rose-800/40 rounded-xl">
+                            <div class="text-rose-400 font-bold text-base mb-1">👈 KIRI</div>
+                            <div class="text-rose-200 font-semibold">SALAH ✗</div>
+                            <p class="text-slate-400 text-[10px] mt-1">Geser/lompat ke kiri layar</p>
+                        </div>
+                        <div class="p-3 bg-emerald-950/40 border border-emerald-800/40 rounded-xl">
+                            <div class="text-emerald-400 font-bold text-base mb-1">KANAN 👉</div>
+                            <div class="text-emerald-200 font-semibold">BENAR ✓</div>
+                            <p class="text-slate-400 text-[10px] mt-1">Geser/lompat ke kanan layar</p>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-slate-400 leading-relaxed italic">
+                        * Posisikan seluruh badan terlihat jelas di kamera. Berdirilah di tengah zona untuk siap menjawab soal berikutnya.
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4 items-center justify-between pt-2">
+                <button onclick="showLeaderboardModal()" class="w-full sm:w-auto px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 font-semibold text-sm transition flex items-center justify-center gap-2">
+                    🏆 Papan Peringkat
+                </button>
+                <button onclick="startGame()" class="w-full sm:w-grow px-8 py-4 rounded-xl bg-gradient-to-r from-red-600 to-amber-500 hover:from-red-500 hover:to-amber-400 text-white font-extrabold text-lg shadow-xl hover:shadow-red-500/25 transition transform active:scale-95 flex items-center justify-center gap-2">
+                    <span>🚀</span> MULAI PERMAINAN
+                </button>
+            </div>
+            
+            <p class="text-[11px] text-center text-slate-400">
+                🔒 Privasi Terjamin: Video diproses secara lokal di perangkat Anda dan tidak dikirim ke server mana pun.
+            </p>
+        </section>
+
+        <!-- ================= 2. LAYAR KALIBRASI KAMERA ================= -->
+        <section id="calibrationScreen" class="hidden w-full max-w-3xl glass-dark rounded-3xl p-6 text-center space-y-4 shadow-2xl relative border border-slate-700">
+            <h2 class="text-2xl font-bold text-amber-400">Persiapan & Kalibrasi Posisi</h2>
+            <p class="text-slate-300 text-sm">Berdirilah tegak di posisi tengah di depan kamera hingga tubuh Anda terdeteksi.</p>
+
+            <div class="relative w-full aspect-video bg-slate-950 rounded-2xl overflow-hidden border-2 border-amber-500/50 shadow-inner flex items-center justify-center">
+                <video id="webcamVideo" class="absolute inset-0 w-full h-full object-cover mirror-canvas" playsinline></video>
+                <canvas id="calibrationCanvas" class="absolute inset-0 w-full h-full mirror-canvas"></canvas>
+                
+                <!-- Overlay Garis Tengah Kalibrasi -->
+                <div class="absolute inset-y-0 left-1/2 -translate-x-1/2 w-32 border-x-2 border-dashed border-amber-400/60 bg-amber-400/10 flex items-center justify-center pointer-events-none">
+                    <span class="text-xs text-amber-300 font-bold bg-slate-900/80 px-2 py-1 rounded">ZONA TENGAH</span>
+                </div>
+
+                <div id="calibrationCountdown" class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm flex flex-col items-center justify-center space-y-2">
+                    <div class="text-6xl font-black text-amber-400 animate-bounce" id="calibCountText">3</div>
+                    <p class="text-white font-semibold text-base">Berdiri tepat di garis tengah...</p>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center text-xs text-slate-400 px-2">
+                <span>Status Model: <span id="modelStatusText" class="text-amber-400 font-bold">Memuat MediaPipe Pose...</span></span>
+                <button onclick="recalibrate()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200">🔄 Kalibrasi Ulang</button>
+            </div>
+        </section>
+
+        <!-- ================= 3. LAYAR PERMAINAN UTAMA (GAMEPLAY) ================= -->
+        <section id="gameScreen" class="hidden w-full max-w-6xl flex flex-col gap-4 relative">
+            
+            <!-- Header Status Game -->
+            <div class="glass-dark p-4 rounded-2xl border border-slate-700 flex flex-wrap justify-between items-center gap-3">
+                <div class="flex items-center space-x-3">
+                    <span id="badgeMateri" class="px-3 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full text-xs font-semibold">Materi</span>
+                    <span id="badgeSoalNum" class="text-slate-300 text-sm font-bold">Soal 1 / 15</span>
+                </div>
+
+                <!-- Timer Bar & Nilai -->
+                <div class="flex-grow max-w-xs mx-auto">
+                    <div class="flex justify-between text-xs font-bold text-slate-300 mb-1">
+                        <span>WAKTU</span>
+                        <span id="timerText">15s</span>
+                    </div>
+                    <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+                        <div id="timerBar" class="h-full bg-gradient-to-r from-emerald-500 via-amber-400 to-red-500 transition-all duration-100 ease-linear w-full"></div>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <div class="text-xs text-slate-400 font-semibold">SKOR TOTAL</div>
+                        <div id="scoreDisplay" class="text-2xl font-black text-amber-400">0</div>
+                    </div>
+                    <div id="comboBadge" class="hidden px-2.5 py-1 bg-gradient-to-r from-red-600 to-amber-500 text-white font-extrabold text-xs rounded-lg animate-pulse shadow-md">
+                        COMBO x<span id="comboCount">0</span>!
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kartu Pernyataan / Soal Utama -->
+            <div class="glass-panel text-slate-900 p-6 md:p-8 rounded-3xl shadow-2xl border border-white/50 text-center relative overflow-hidden">
+                <h3 id="questionText" class="text-xl md:text-3xl font-extrabold leading-snug tracking-tight text-slate-900">
+                    Pernyataan soal sedang dimuat...
+                </h3>
+            </div>
+
+            <!-- Area Interaktif Kamera & Zona Lompat -->
+            <div class="relative w-full aspect-[16/9] md:aspect-[21/9] bg-slate-950 rounded-3xl overflow-hidden border-2 border-slate-700 shadow-2xl flex">
+                
+                <!-- Video & Overlay Tracking -->
+                <video id="gameplayVideo" class="absolute inset-0 w-full h-full object-cover mirror-canvas" playsinline></video>
+                <canvas id="gameplayCanvas" class="absolute inset-0 w-full h-full mirror-canvas"></canvas>
+
+                <!-- Visual Zona KIRI (SALAH) -->
+                <div id="zoneLeft" class="relative w-1/3 h-full border-r-2 border-rose-500/30 bg-rose-950/20 transition-all duration-200 flex flex-col items-center justify-center p-4">
+                    <div class="text-rose-400 font-black text-3xl md:text-5xl drop-shadow-lg">SALAH</div>
+                    <div class="text-white text-4xl md:text-6xl my-2">✗</div>
+                    <span class="text-rose-200 text-xs md:text-sm font-bold bg-rose-950/70 px-3 py-1 rounded-full border border-rose-500/40">👈 Lompat Ke Kiri</span>
+                </div>
+
+                <!-- Visual Zona TENGAH (READY) -->
+                <div id="zoneCenter" class="relative w-1/3 h-full bg-slate-900/10 border-x border-slate-700/20 flex flex-col items-center justify-between p-3">
+                    <span class="text-[11px] font-bold text-slate-300 bg-slate-900/80 px-2 py-0.5 rounded border border-slate-700">SIAP / TENGAH</span>
+                    <!-- Indikator Posisi Real-time Slider -->
+                    <div class="w-full bg-slate-800/80 rounded-full h-2 overflow-hidden border border-slate-700">
+                        <div id="posIndicator" class="bg-amber-400 h-full w-4 rounded-full transition-all duration-75 mx-auto"></div>
+                    </div>
+                    <span id="trackingAlert" class="hidden text-[10px] text-amber-300 font-bold bg-red-900/80 px-2 py-1 rounded">⚠️ Pelacakan Terganggu</span>
+                </div>
+
+                <!-- Visual Zona KANAN (BENAR) -->
+                <div id="zoneRight" class="relative w-1/3 h-full border-l-2 border-emerald-500/30 bg-emerald-950/20 transition-all duration-200 flex flex-col items-center justify-center p-4">
+                    <div class="text-emerald-400 font-black text-3xl md:text-5xl drop-shadow-lg">BENAR</div>
+                    <div class="text-white text-4xl md:text-6xl my-2">✓</div>
+                    <span class="text-emerald-200 text-xs md:text-sm font-bold bg-emerald-950/70 px-3 py-1 rounded-full border border-emerald-500/40">Lompat Ke Kanan 👉</span>
+                </div>
+
+                <!-- OVERLAY UMPAN BALIK JAWABAN (MODAL POPUP REKAP SOAL) -->
+                <div id="feedbackOverlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center space-y-3 z-30">
+                    <div id="feedbackBadge" class="px-5 py-2 rounded-full font-black text-lg md:text-2xl tracking-wider shadow-lg">
+                        BENAR!
+                    </div>
+                    <div id="feedbackPoints" class="text-amber-300 font-extrabold text-xl">+180 Poin</div>
+                    <p id="explanationText" class="text-slate-200 text-sm md:text-base max-w-2xl leading-relaxed bg-slate-900/80 p-4 rounded-2xl border border-slate-700">
+                        Penjelasan jawaban akan ditampilkan di sini...
+                    </p>
+                    <p class="text-xs text-slate-400 animate-pulse">Menyiapkan soal berikutnya...</p>
+                </div>
+            </div>
+
+            <!-- Fallback Manual Controls & Settings Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/80 p-3 rounded-2xl border border-slate-800 text-xs">
+                <!-- Manual Buttons -->
+                <div class="flex items-center space-x-2">
+                    <span class="text-slate-400 font-bold">Kontrol Manual:</span>
+                    <button onclick="submitAnswer(false)" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl active:scale-95 transition">
+                        [←] SALAH
+                    </button>
+                    <button onclick="submitAnswer(true)" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl active:scale-95 transition">
+                        BENAR [→]
+                    </button>
+                </div>
+
+                <!-- Sensitivity Slider -->
+                <div class="flex items-center space-x-2 text-slate-300">
+                    <span>Sensitivitas Lompatan:</span>
+                    <select id="sensitivitySelect" onchange="updateSensitivity()" class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-white focus:outline-none">
+                        <option value="low">Rendah</option>
+                        <option value="medium">Sedang</option>
+                        <option value="high">Tinggi</option>
+                        <option value="vhigh" selected>Sangat Tinggi</option>
+                    </select>
+                </div>
+
+                <!-- FPS Indicator -->
+                <div class="text-slate-400 font-mono">FPS: <span id="fpsCounter" class="text-emerald-400 font-bold">60</span></div>
+            </div>
+        </section>
+
+        <!-- ================= 4. LAYAR HASIL AKHIR (RESULT SCREEN) ================= -->
+        <section id="resultScreen" class="hidden w-full max-w-4xl glass-dark rounded-3xl p-6 md:p-8 shadow-2xl space-y-6 relative border border-slate-700 my-auto">
+            <div class="text-center space-y-2">
+                <span id="predikatBadge" class="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest">Pelajar Pancasila Teladan</span>
+                <h2 class="text-3xl md:text-5xl font-black text-white">Hasil Akhir Permainan</h2>
+                <p id="resultPlayerInfo" class="text-slate-400 text-sm">Pemain: Anonim | Level: HOTS | Soal: 15</p>
+            </div>
+
+            <!-- Highlight Skor Utama -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700">
+                    <div class="text-slate-400 text-xs font-semibold mb-1">SKOR TOTAL</div>
+                    <div id="resTotalScore" class="text-2xl md:text-3xl font-black text-amber-400">2450</div>
+                </div>
+                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700">
+                    <div class="text-slate-400 text-xs font-semibold mb-1">AKURASI</div>
+                    <div id="resAccuracy" class="text-2xl md:text-3xl font-black text-emerald-400">93%</div>
+                </div>
+                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700">
+                    <div class="text-slate-400 text-xs font-semibold mb-1">BENAR / SALAH</div>
+                    <div id="resCorrectWrong" class="text-xl md:text-2xl font-black text-slate-200">14 / 1</div>
+                </div>
+                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700">
+                    <div class="text-slate-400 text-xs font-semibold mb-1">BEST COMBO</div>
+                    <div id="resBestCombo" class="text-2xl md:text-3xl font-black text-rose-400">8🔥</div>
+                </div>
+            </div>
+
+            <!-- Rekap Per Materi -->
+            <div class="space-y-3 bg-slate-800/40 p-4 rounded-2xl border border-slate-700/60">
+                <h3 class="font-bold text-slate-200 text-sm">📊 Rekap Penguasaan Materi PPKn:</h3>
+                <div id="materiProgressContainer" class="space-y-2">
+                    <!-- Progress bar tiap materi diisi via JS -->
+                </div>
+            </div>
+
+            <!-- Daftar Soal Yang Perlu Dipelajari Lagi -->
+            <div class="space-y-2">
+                <h3 class="font-bold text-slate-200 text-sm flex items-center justify-between">
+                    <span>💡 Pembahasan Soal Yang Salah / Melewatkan:</span>
+                    <span id="wrongCountBadge" class="text-xs text-rose-400 bg-rose-950/60 px-2 py-0.5 rounded font-mono">0 Soal</span>
+                </h3>
+                <div id="wrongQuestionsList" class="max-h-48 overflow-y-auto space-y-2 pr-1 custom-scrollbar text-xs">
+                    <!-- Ditampilkan via JS -->
+                </div>
+            </div>
+
+            <!-- Navigasi Aksi Akhir -->
+            <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                <button onclick="restartGame()" class="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-red-600 to-amber-500 hover:from-red-500 hover:to-amber-400 text-white font-extrabold text-base shadow-lg transition active:scale-95 text-center">
+                    🔄 Main Lagi (Acak Soal Baru)
+                </button>
+                <button onclick="returnToMenu()" class="flex-1 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 font-bold text-base transition text-center">
+                    🏠 Kembali ke Menu Utama
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL PAPAN PERINGKAT / LEADERBOARD -->
+    <div id="leaderboardModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="glass-dark w-full max-w-md rounded-3xl p-6 border border-slate-700 space-y-4 relative">
+            <div class="flex justify-between items-center">
+                <h3 class="text-xl font-bold text-amber-400 flex items-center gap-2">🏆 5 Skor Tertinggi</h3>
+                <button onclick="closeLeaderboardModal()" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+            </div>
+            <div id="leaderboardList" class="space-y-2 text-xs">
+                <!-- Diisi via JavaScript -->
+            </div>
+            <button onclick="closeLeaderboardModal()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl border border-slate-700">Tutup</button>
+        </div>
     </div>
-    <div class="best" id="bestBox"></div>
 
-    <div class="lbl">Sensitivitas kamera</div>
-    <div class="seg" id="segSens">
-      <button data-v="tinggi">Tinggi</button>
-      <button data-v="sedang" class="on">Sedang</button>
-      <button data-v="rendah">Rendah</button>
-    </div>
+    <!-- Footnote Footer -->
+    <footer class="w-full py-2 px-6 bg-slate-950 border-t border-slate-800 text-center text-[11px] text-slate-400">
+        Web Game Edukasi PPKn Kelas 6 SD &copy; Kurikulum Merdeka - Dikembangkan dengan MediaPipe Body Tracking & WebAudio API
+    </footer>
 
-    <div class="how">
-      <b>Cara bermain:</b> layar dibagi dua. Berdiri di <b>TENGAH</b> dulu setiap soal baru.
-      Setelah soal muncul, <b class="k">lompat ke KANAN</b> jika pernyataan <b class="k">BENAR</b>,
-      atau <b class="s">lompat ke KIRI</b> jika pernyataan <b class="s">SALAH</b>.
-      Jawaban benar dan cepat mendapat skor lebih tinggi. Jumlah soal (10, 15, atau 20) diacak oleh sistem.
-    </div>
+    <!-- ================= JAVASCRIPT UTAMA ================= -->
+    <script>
+        /* ==========================================================================
+           KONSTANTA KONFIGURASI APLIKASI
+           ========================================================================== */
+        const KONFIG = {
+            BATAS_WAKTU: { mudah: 12, sedang: 15, hots: 20 },
+            JUMLAH_SOAL_OPSI: [10, 15, 20],
+            POIN_DASAR: 100,
+            SENSITIVITAS_FACTOR: { low: 0.8, medium: 0.6, high: 0.45, vhigh: 0.35 },
+            SMOOTHING_ALPHA: 0.65
+        };
 
-    <div class="btnrow">
-      <button id="btnStart" class="big">▶ MULAI (pakai kamera)</button>
-      <button id="btnNoCam" class="alt">⌨ Mode Tanpa Kamera</button>
-    </div>
-    <div class="btnrow">
-      <button id="btnFsH" class="mini">⛶ Layar penuh</button>
-      <button id="btnMuteH" class="mini">🔊 Suara: hidup</button>
-    </div>
-    <div class="privasi">🔒 Video kamera hanya diproses di perangkat ini. Tidak direkam dan tidak dikirim ke mana pun.
-      Kamera hanya dapat berjalan lewat HTTPS atau localhost.</div>
-  </div>
-</section>
+        /* ==========================================================================
+           1. BANK SOAL LENGKAP (120 BUTIR SOAL ACCURATE PPKn KELAS 6)
+           6 Materi Terwakili:
+           1. Hubungan Nilai Pancasila
+           2. Pengamalan Pancasila
+           3. Pancasila Pandangan Hidup
+           4. Mengajak Teman Mengamalkan Pancasila
+           5. Nilai, Norma, Hak & Kewajiban
+           6. Musyawarah & Mufakat
+           ========================================================================== */
+        const BANK_SOAL = [
+            /* ---------------- LEVEL MUDAH (40 SOAL) ---------------- */
+            // Materi 1
+            { id:"M01", materi:"Hubungan Nilai Pancasila", level:"mudah", pernyataan:"Lambang Sila Pertama Pancasila adalah Bintang Emas bersudut lima.", jawaban:true, penjelasan:"Bintang Emas melambangkan cahaya kerohanian Tuhan bagi setiap manusia." },
+            { id:"M02", materi:"Hubungan Nilai Pancasila", level:"mudah", pernyataan:"Sila Kemanusiaan yang Adil dan Beradab adalah sila ketiga Pancasila.", jawaban:false, penjelasan:"Kemanusiaan yang Adil dan Beradab adalah bunyi sila kedua Pancasila." },
+            { id:"M03", materi:"Hubungan Nilai Pancasila", level:"mudah", pernyataan:"Pohon Beringin merupakan simbol Pancasila yang melambangkan Persatuan Indonesia.", jawaban:true, penjelasan:"Pohon Beringin memiliki akar tunggang yang kuat melambangkan persatuan bangsa Indonesia." },
+            { id:"M04", materi:"Hubungan Nilai Pancasila", level:"mudah", pernyataan:"Lambang Kepala Banteng mewakili Sila Kelima Pancasila.", jawaban:false, penjelasan:"Kepala Banteng melambangkan Sila Keempat Pancasila." },
+            { id:"M05", materi:"Hubungan Nilai Pancasila", level:"mudah", pernyataan:"Rantai Emas pada lambang sila kedua terdiri dari gelang berbentuk persegi dan lingkaran.", jawaban:true, penjelasan:"Gelang persegi melambangkan laki-laki dan lingkaran melambangkan perempuan yang bersatu." },
+            { id:"M06", materi:"Hubungan Nilai Pancasila", level:"mudah", pernyataan:"Sila Pertama menjiwai seluruh sila-sila Pancasila lainnya.", jawaban:true, penjelasan:"Nilai Ketuhanan menjadi landasan moral tertinggi bagi pelaksanaan seluruh sila Pancasila." },
+            { id:"M07", materi:"Hubungan Nilai Pancasila", level:"mudah", pernyataan:"Padi dan Kapas adalah simbol yang melambangkan keadilan sosial dan kemakmuran.", jawaban:true, penjelasan:"Padi melambangkan pangan dan kapas melambangkan sandang sebagai kebutuhan dasar rakyat." },
 
-<!-- HITUNG MUNDUR -->
-<section id="count" class="screen">
-  <div>
-    <div id="cdInfo"></div>
-    <div id="cdNum">3</div>
-    <div id="cdTip">Bersiap berdiri di tengah!</div>
-  </div>
-</section>
+            // Materi 2
+            { id:"M08", materi:"Pengamalan Pancasila", level:"mudah", pernyataan:"Berdoa sebelum dan sesudah makan adalah contoh pengamalan Sila Pertama Pancasila.", jawaban:true, penjelasan:"Wujud syukur dan ibadah kepada Tuhan merupakan pengamalan Sila Ke-1." },
+            { id:"M09", materi:"Pengamalan Pancasila", level:"mudah", pernyataan:"Membantu korban bencana alam merupakan wujud pengamalan Sila Kedua Pancasila.", jawaban:true, penjelasan:"Sikap kemanusiaan dan empati kepada sesama sesuai dengan nilai Sila Ke-2." },
+            { id:"M10", materi:"Pengamalan Pancasila", level:"mudah", pernyataan:"Memilih-milih teman bermain berdasarkan suku dan agamanya adalah pengamalan Sila Ke-3.", jawaban:false, penjelasan:"Memilih-milih teman merusak persatuan dan bertentangan dengan Sila Ke-3." },
+            { id:"M11", materi:"Pengamalan Pancasila", level:"mudah", pernyataan:"Mengikuti upacara bendera hari Senin dengan tertib adalah pengamalan Sila Ketiga.", jawaban:true, penjelasan:"Upacara bendera menumbuhkan rasa cinta tanah air dan persatuan Indonesia." },
+            { id:"M12", materi:"Pengamalan Pancasila", level:"mudah", pernyataan:"Menghargai pendapat teman saat berdiskusi kelompok di kelas adalah contoh pengamalan Sila Ke-4.", jawaban:true, penjelasan:"Sila Ke-4 mengajarkan kita untuk mengutamakan musyawarah dan menghargai pendapat." },
+            { id:"M13", materi:"Pengamalan Pancasila", level:"mudah", pernyataan:"Membeli produk dalam negeri buatan UMKM Indonesia mengamalkan Sila Ke-3.", jawaban:true, penjelasan:"Mencintai produk dalam negeri merupakan wujud rasa nasionalisme dan persatuan." },
+            { id:"M14", materi:"Pengamalan Pancasila", level:"mudah", pernyataan:"Menjaga kebersihan fasilitas umum bersama-sama mengamalkan Sila Ke-5.", jawaban:true, penjelasan:"Menjaga kepentingan umum dan gotong royong sesuai dengan Sila Ke-5." },
 
-<!-- PERMAINAN -->
-<section id="game" class="screen gs-gate">
-  <div id="zoneL" class="zone">
-    <div class="zlabel"><div class="big2">SALAH ✗</div><div class="sm">← Lompat ke KIRI</div></div>
-    <div class="stamp"></div>
-  </div>
-  <div id="zoneR" class="zone">
-    <div class="zlabel"><div class="big2">BENAR ✓</div><div class="sm">Lompat ke KANAN →</div></div>
-    <div class="stamp"></div>
-  </div>
-  <div id="band"><div class="t">TENGAH<br>SIAP</div></div>
-  <div id="divider"></div>
+            // Materi 3
+            { id:"M15", materi:"Pancasila Pandangan Hidup", level:"mudah", pernyataan:"Pancasila sebagai pandangan hidup berartijadi petunjuk arah dalam kehidupan sehari-hari.", jawaban:true, penjelasan:"Pandangan hidup menjadi pedoman tingkah laku bangsa Indonesia." },
+            { id:"M16", materi:"Pancasila Pandangan Hidup", level:"mudah", pernyataan:"Pancasila hanya wajib diamalkan oleh pejabat pemerintah saja.", jawaban:false, penjelasan:"Pancasila wajib diamalkan oleh seluruh warga negara Indonesia tanpa terkecuali." },
+            { id:"M17", materi:"Pancasila Pandangan Hidup", level:"mudah", pernyataan:"Dasar negara Indonesia yang sah tercantum dalam Pembukaan UUD 1945 alinea IV.", jawaban:true, penjelasan:"Rumusan resmi Pancasila terdapat pada Pembukaan UUD 1945 alinea keempat." },
+            { id:"M18", materi:"Pancasila Pandangan Hidup", level:"mudah", pernyataan:"Pancasila baru disahkan sebagai dasar negara pada tanggal 17 Agustus 1945.", jawaban:false, penjelasan:"Pancasila disahkan oleh PPKI sebagai dasar negara pada tanggal 18 Agustus 1945." },
+            { id:"M19", materi:"Pancasila Pandangan Hidup", level:"mudah", pernyataan:"Hari Lahir Pancasila diperingati bangsa Indonesia setiap tanggal 1 Juni.", jawaban:true, penjelasan:"1 Juni diperingati sebagai Hari Lahir Pancasila berdasarkan pidato Ir. Soekarno tahun 1945." },
+            { id:"M20", materi:"Pancasila Pandangan Hidup", level:"mudah", pernyataan:"Menjadikan Pancasila pedoman membuat bangsa Indonesia tidak mudah terpecah belah.", jawaban:true, penjelasan:"Pancasila berfungsi sebagai pemersatu dalam keberagaman bangsa." },
 
-  <div id="hud">Soal <b id="hQ">1/10</b><br>Skor <b id="hS">0</b></div>
-  <div id="hudR">
-    <select id="hSens" title="Sensitivitas kamera">
-      <option value="tinggi">Sens: Tinggi</option>
-      <option value="sedang" selected>Sens: Sedang</option>
-      <option value="rendah">Sens: Rendah</option>
-    </select>
-    <button id="bPause" title="Jeda (tombol P)">⏸</button>
-    <button id="bRecal" title="Kalibrasi ulang">🎯</button>
-    <button id="bMute" title="Suara">🔊</button>
-    <button id="bDebug" title="Mode debug">🐞</button>
-    <button id="bFs" title="Layar penuh">⛶</button>
-    <button id="bHome" title="Beranda">🏠</button>
-  </div>
+            // Materi 4
+            { id:"M21", materi:"Mengajak Teman Mengamalkan Pancasila", level:"mudah", pernyataan:"Mengajak teman beribadah harus dilakukan dengan cara memaksa dan menakut-nakuti.", jawaban:false, penjelasan:"Mengajak kebaikan harus dilakukan dengan sopan, lembut, dan tanpa paksaan." },
+            { id:"M22", materi:"Mengajak Teman Mengamalkan Pancasila", level:"mudah", pernyataan:"Memberi contoh menyeberang di zebra cross adalah cara mengajak teman tertib lalu lintas.", jawaban:true, penjelasan:"Keteladanan langsung adalah cara paling efektif mengajak teman berbuat baik." },
+            { id:"M23", materi:"Mengajak Teman Mengamalkan Pancasila", level:"mudah", pernyataan:"Mengingatkan teman yang membuang sampah sembarangan hendaknya dengan nada membentak.", jawaban:false, penjelasan:"Mengingatkan harus dengan bahasa yang santun agar diterima dengan baik." },
+            { id:"M24", materi:"Mengajak Teman Mengamalkan Pancasila", level:"mudah", pernyataan:"Mengajak teman piket bersama membuat pekerjaan terasa lebih ringan.", jawaban:true, penjelasan:"Gotong royong dan ajakan positif mempermudah menyelesaikan tugas bersama." },
+            { id:"M25", materi:"Mengajak Teman Mengamalkan Pancasila", level:"mudah", pernyataan:"Menjelaskan manfaat berbagi dapat mendorong teman untuk suka menolong sesama.", jawaban:true, penjelasan:"Memberikan pemahaman positif memotivasi teman melakukan pengamalan Pancasila." },
 
-  <div id="qcard">
-    <div id="qGate">
-      <div id="gNum">Soal 1 dari 10</div>
-      <svg id="ring" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r="42" fill="none" stroke="#e7d7ad" stroke-width="12"></circle>
-        <circle id="ringFg" cx="50" cy="50" r="42" fill="none" stroke="#1b9e4b" stroke-width="12" stroke-linecap="round" transform="rotate(-90 50 50)"></circle>
-      </svg>
-      <div class="gmsg">⬅ Berdiri di TENGAH dulu! ➡</div>
-    </div>
-    <div id="qMain" style="display:none">
-      <div class="qmeta"><span id="qTopik"></span><span id="qLevel" class="badge"></span></div>
-      <div id="qText"></div>
-      <div id="qTimer">
-        <div class="tbar"><div id="tFill"></div></div>
-        <div id="tLabel"></div>
-      </div>
-    </div>
-    <div id="qFb" style="display:none">
-      <div id="fbHead"></div>
-      <div id="fbSub"></div>
-      <div id="fbExp"></div>
-      <div id="fbHint">Kembali ke tengah untuk soal berikutnya</div>
-    </div>
-  </div>
+            // Materi 5
+            { id:"M26", materi:"Nilai Norma Hak Kewajiban", level:"mudah", pernyataan:"Norma hukum memiliki sanksi tegas dan mengikat yang dibuat oleh lembaga berwenang.", jawaban:true, penjelasan:"Norma hukum bersifat memaksa dengan sanksi resmi dari negara." },
+            { id:"M27", materi:"Nilai Norma Hak Kewajiban", level:"mudah", pernyataan:"Mendapatkan pendidikan dan pengajaran di sekolah adalah kewajiban seorang siswa.", jawaban:false, penjelasan:"Mendapatkan pendidikan adalah HAK siswa, sedangkan belajar dengan rajin adalah KEWAJIBAN." },
+            { id:"M28", materi:"Nilai Norma Hak Kewajiban", level:"mudah", pernyataan:"Menghormati orang tua dan guru adalah contoh pelaksanaan norma kesopanan.", jawaban:true, penjelasan:"Norma kesopanan bersumber dari tata krama dan kebiasaan masyarakat." },
+            { id:"M29", materi:"Nilai Norma Hak Kewajiban", level:"mudah", pernyataan:"Hak harus dilaksanakan terlebih dahulu baru menuntut kewajiban.", jawaban:false, penjelasan:"Kewajiban harus dilaksanakan terlebih dahulu dengan penuh tanggung jawab baru menuntut hak." },
+            { id:"M30", materi:"Nilai Norma Hak Kewajiban", level:"mudah", pernyataan:"Norma kesusilaan bersumber dari hati nurani manusia.", jawaban:true, penjelasan:"Mendengarkan suara hati nurani untuk membedakan baik dan buruk adalah norma kesusilaan." },
+            { id:"M31", materi:"Nilai Norma Hak Kewajiban", level:"mudah", pernyataan:"Mengerjakan tugas sekolah tepat waktu adalah kewajiban setiap siswa.", jawaban:true, penjelasan:"Tugas sekolah merupakan kewajiban tanggung jawab akademik siswa." },
+            { id:"M32", materi:"Nilai Norma Hak Kewajiban", level:"mudah", pernyataan:"Sanksi bagi pelanggar norma agama dirasakan langsung di dunia dalam bentuk denda uang.", jawaban:false, penjelasan:"Sanksi norma agama berwujud dosa atau hukuman dari Tuhan di akhirat nanti." },
+            { id:"M33", materi:"Nilai Norma Hak Kewajiban", level:"mudah", pernyataan:"Mendapatkan kasih sayang dari orang tua merupakan hak anak di rumah.", jawaban:true, penjelasan:"Anak berhak atas perlindungan dan kasih sayang orang tua." },
 
-  <div id="marker">KAMU</div>
-  <div id="lostMsg">Pemain tidak terdeteksi.<br>Berdiri di depan kamera.</div>
-  <div id="plus"></div>
-  <div id="kbBtns">
-    <button id="kbL">← SALAH</button>
-    <button id="kbC">● TENGAH</button>
-    <button id="kbR">BENAR →</button>
-  </div>
-</section>
+            // Materi 6
+            { id:"M34", materi:"Musyawarah Mufakat", level:"mudah", pernyataan:"Musyawarah bertujuan untuk mencapai mufakat atau kesepakatan bersama.", jawaban:true, penjelasan:"Mufakat adalah hasil kesepakatan utuh yang disetujui semua peserta musyawarah." },
+            { id:"M35", materi:"Musyawarah Mufakat", level:"mudah", pernyataan:"Saat musyawarah, kita tidak boleh memotong pembicaraan teman yang sedang menyampaikan pendapat.", jawaban:true, penjelasan:"Menghargai orang yang bicara adalah etika dasar dalam musyawarah." },
+            { id:"M36", materi:"Musyawarah Mufakat", level:"mudah", pernyataan:"Keputusan hasil musyawarah hanya wajib dilaksanakan oleh peserta yang menyetujui saja.", jawaban:false, penjelasan:"Keputusan musyawarah wajib dilaksanakan oleh SELURUH anggota dengan tanggung jawab." },
+            { id:"M37", materi:"Musyawarah Mufakat", level:"mudah", pernyataan:"Musyawarah merupakan penjelmaan dari pengamalan Sila Keempat Pancasila.", jawaban:true, penjelasan:"Sila Ke-4 menekankan musyawarah untuk mufakat dipimpin oleh hikmat kebijaksanaan." },
+            { id:"M38", materi:"Musyawarah Mufakat", level:"mudah", pernyataan:"Voting atau pemungutan suara dilakukan jika musyawarah mufakat mengalami kebuntuan.", jawaban:true, penjelasan:"Pemungutan suara menjadi langkah alternatif bila mufakat tidak tercapai." },
+            { id:"M39", materi:"Musyawarah Mufakat", level:"mudah", pernyataan:"Memaksa orang lain menerima pendapat kita adalah ciri musyawarah yang baik.", jawaban:false, penjelasan:"Musyawarah melarang adanya pemaksaan kehendak pribadi." },
+            { id:"M40", materi:"Musyawarah Mufakat", level:"mudah", pernyataan:"Pemilihan ketua kelas merupakan contoh kegiatan musyawarah di lingkungan sekolah.", jawaban:true, penjelasan:"Pemilihan ketua kelas melatih siswa bermusyawarah secara demokratis." },
 
-<!-- HASIL -->
-<section id="result" class="screen">
-  <div id="confetti"></div>
-  <div class="resbox" id="resBox"></div>
-</section>
+            /* ---------------- LEVEL SEDANG (40 SOAL) ---------------- */
+            // Materi 1
+            { id:"S01", materi:"Hubungan Nilai Pancasila", level:"sedang", pernyataan:"Sila Kedua Pancasila melandasi pelaksanaan Sila Ketiga dalam menghargai perbedaan ras di Indonesia.", jawaban:true, penjelasan:"Sikap memanusiakan manusia (Sila 2) mempermudah terwujudnya persatuan bangsa (Sila 3)." },
+            { id:"S02", materi:"Hubungan Nilai Pancasila", level:"sedang", pernyataan:"Urutan sila Pancasila bersifat acak dan boleh ditukar tanpa mengubah maknanya.", jawaban:false, penjelasan:"Urutan Pancasila bersifat hierarkis dan piramidal, saling menjiwai dari sila 1 hingga 5." },
+            { id:"S03", materi:"Hubungan Nilai Pancasila", level:"sedang", pernyataan:"Sila Ke-4 menjadi wadah untuk mewujudkan cita-cita keadilan sosial pada Sila Ke-5.", jawaban:true, penjelasan:"Melalui keputusan musyawarah yang bijak (Sila 4), keadilan bagi seluruh rakyat (Sila 5) tercapai." },
+            { id:"S04", materi:"Hubungan Nilai Pancasila", level:"sedang", pernyataan:"Persatuan Indonesia pada Sila Ke-3 hanya berlaku untuk warga yang tinggal di Pulau Jawa.", jawaban:false, penjelasan:"Sila Ke-3 mencakup seluruh wilayah dan rakyat Indonesia dari Sabang sampai Merauke." },
+            { id:"S05", materi:"Hubungan Nilai Pancasila", level:"sedang", pernyataan:"Pernyataan 'Toleransi antarumat beragama mendukung persatuan nasional' menggambarkan hubungan Sila 1 dan 3.", jawaban:true, penjelasan:"Kerukunan agama (Sila 1) memperkokoh persatuan dan kesatuan nasional (Sila 3)." },
+            { id:"S06", materi:"Hubungan Nilai Pancasila", level:"sedang", pernyataan:"Pengakuan hak asasi manusia adalah bentuk hubungan langsung antara Sila Ke-2 dan Ke-5.", jawaban:true, penjelasan:"Menghormati hak manusia (Sila 2) menciptakan keadilan bagi seluruh masyarakat (Sila 5)." },
 
-<!-- OVERLAY KALIBRASI -->
-<div id="calib" class="overlay">
-  <div id="calLine"></div>
-  <div class="calpanel">
-    <h2>📷 Kalibrasi Kamera</h2>
-    <div id="calMsg">Menyalakan kamera…</div>
-    <div class="pbar"><div id="calFill"></div></div>
-    <ul class="tips">
-      <li>Berdiri di tengah kamera dengan jarak sekitar 2 meter, bahu sampai pinggul terlihat.</li>
-      <li>Ruangan cukup terang dan jangan membelakangi jendela.</li>
-      <li>Letakkan kamera setinggi dada. Sisakan ruang kosong di kiri dan kanan untuk melompat.</li>
-    </ul>
-    <button id="calCancel" class="mini">Batal</button>
-  </div>
-</div>
+            // Materi 2
+            { id:"S07", materi:"Pengamalan Pancasila", level:"sedang", pernyataan:"Doni membagi bekal makanannya secara adil kepada teman yang lupa membawa uang saku. Doni mengamalkan Sila Ke-5.", jawaban:true, penjelasan:"Bersikap adil dan suka memberi pertolongan kepada sesama adalah pengamalan Sila Ke-5." },
+            { id:"S08", materi:"Pengamalan Pancasila", level:"sedang", pernyataan:"Bekerja sama dalam piket kelas tanpa membeda-bedakan latar belakang teman mengamalkan Sila Ke-3 dan Ke-5.", jawaban:true, penjelasan:"Piket bersama memupuk persatuan (Sila 3) dan kebersamaan gotong royong (Sila 5)." },
+            { id:"S09", materi:"Pengamalan Pancasila", level:"sedang", pernyataan:"Siti menolak berteman dengan Lani karena perbedaan keyakinan. Tindakan Siti sudah sesuai Sila Ke-1.", jawaban:false, penjelasan:"Sila Ke-1 justru mengajarkan untuk saling menghormati dan bertoleransi antarumat beragama." },
+            { id:"S10", materi:"Pengamalan Pancasila", level:"sedang", pernyataan:"Menyelesaikan perselisihan antarteman di sekolah melalui ruang bimbingan dengan damai mengamalkan Sila Ke-4.", jawaban:true, penjelasan:"Musyawarah dan penyelesaian masalah secara damai sesuai dengan nilai Sila Ke-4." },
+            { id:"S11", materi:"Pengamalan Pancasila", level:"sedang", pernyataan:"Menggunakan produk impor secara berlebihan agar dipuji teman adalah bukti cinta tanah air (Sila 3).", jawaban:false, penjelasan:"Cinta tanah air ditunjukkan dengan bangga menggunakan produk dalam negeri." },
+            { id:"S12", materi:"Pengamalan Pancasila", level:"sedang", pernyataan:"Mendorong teman untuk berani menyuarakan pendapatnya dalam pemilihan kelompok mengamalkan Sila Ke-4.", jawaban:true, penjelasan:"Memberikan kesempatan berpendapat adalah wujud kebebasan berdemokrasi Sila Ke-4." },
+            { id:"S13", materi:"Pengamalan Pancasila", level:"sedang", pernyataan:"Membantu tetangga yang tertimpa musibah kebakaran merupakan pengamalan Sila Ke-2 di lingkungan masyarakat.", jawaban:true, penjelasan:"Tolong-menolong antarmanusia di masyarakat adalah bukti nyata Sila Ke-2." },
 
-<!-- OVERLAY GALAT -->
-<div id="err" class="overlay">
-  <div class="errbox">
-    <h2>😕 Ups…</h2>
-    <p id="errMsg"></p>
-    <div class="btnrow">
-      <button id="errNoCam" class="big" style="font-size:18px">⌨ Main Tanpa Kamera</button>
-      <button id="errBack" class="alt">Kembali</button>
-    </div>
-  </div>
-</div>
+            // Materi 3
+            { id:"S14", materi:"Pancasila Pandangan Hidup", level:"sedang", pernyataan:"Pancasila sebagai pandangan hidup bangsa menyaring budaya asing yang masuk ke Indonesia.", jawaban:true, penjelasan:"Pancasila menjadi filter agar budaya asing yang negatif tidak merusak nilai luhur bangsa." },
+            { id:"S15", materi:"Pancasila Pandangan Hidup", level:"sedang", pernyataan:"Cita-cita bangsa Indonesia yang tercantum dalam Pembukaan UUD 1945 berlandaskan pada nilai-nilai Pancasila.", jawaban:true, penjelasan:"Tujuan negara sejalan dan bersumber dari kelima sila Pancasila." },
+            { id:"S16", materi:"Pancasila Pandangan Hidup", level:"sedang", pernyataan:"Jika suatu hukum bertentangan dengan Pancasila, hukum tersebut tetap sah digunakan.", jawaban:false, penjelasan:"Pancasila adalah sumber dari segala sumber hukum; peraturan tidak boleh bertentangan darinya." },
+            { id:"S17", materi:"Pancasila Pandangan Hidup", level:"sedang", pernyataan:"Pandangan hidup Pancasila bersifat kaku dan menutup diri dari perkembangan teknologi.", jawaban:false, penjelasan:"Pancasila bersifat terbuka dan dinamis menyesuaikan zaman tanpa kehilangan nilai hakikinya." },
+            { id:"S18", materi:"Pancasila Pandangan Hidup", level:"sedang", pernyataan:"Sikap kekeluargaan dan gotong royong merupakan ciri khas pandangan hidup masyarakat Indonesia.", jawaban:true, penjelasan:"Gotong royong adalah inti pengamalan Pancasila dalam kehidupan bermasyarakat." },
+            { id:"S19", materi:"Pancasila Pandangan Hidup", level:"sedang", pernyataan:"Pancasila menjadi pemersatu di tengah keragaman suku, bahasa, dan budaya Indonesia.", jawaban:true, penjelasan:"Pancasila sebagai meja statis dan leitstar dinamis menyatukan keberagaman Indonesia." },
 
-<!-- OVERLAY JEDA -->
-<div id="pauseOv" class="overlay">
-  <div class="pausebox">
-    <h2>⏸ Jeda</h2>
-    <button id="pauseGo" class="big">▶ Lanjutkan</button>
-  </div>
-</div>
+            // Materi 4
+            { id:"S20", materi:"Mengajak Teman Mengamalkan Pancasila", level:"sedang", pernyataan:"Mengajak teman menjaga kebersihan taman sekolah dapat dilakukan melalui poster ajakan yang menarik.", jawaban:true, penjelasan:"Membuat poster ajakan adalah media positif dan santun dalam menyampaikan kebaikan." },
+            { id:"S21", materi:"Mengajak Teman Mengamalkan Pancasila", level:"sedang", pernyataan:"Apabila teman menolak diajak piket kelas, kita berhak menjauhi dan memusuhinya.", jawaban:false, penjelasan:"Kita tetap harus menasehati secara baik-baik tanpa memusuhi atau mengucilkan." },
+            { id:"S22", materi:"Mengajak Teman Mengamalkan Pancasila", level:"sedang", pernyataan:"Mengatur jadwal belajar bersama adalah contoh mengajak teman mengamalkan kewajiban siswa.", jawaban:true, penjelasan:"Belajar bersama memotivasi dan mempermudah pelaksanaan kewajiban belajar." },
+            { id:"S23", materi:"Mengajak Teman Mengamalkan Pancasila", level:"sedang", pernyataan:"Membiarkan teman mencontek saat ujian adalah wujud rasa kawan dan persatuan Sila Ke-3.", jawaban:false, penjelasan:"Mencontek adalah perbuatan tidak jujur yang melanggar nilai Pancasila." },
+            { id:"S24", materi:"Mengajak Teman Mengamalkan Pancasila", level:"sedang", pernyataan:"Menegur teman yang merusak tanaman sekolah hendaknya dilakukan secara privat agar tidak mempermukanya.", jawaban:true, penjelasan:"Menegur secara santun di tempat pribadi menjaga kehormatan teman." },
+            { id:"S25", materi:"Mengajak Teman Mengamalkan Pancasila", level:"sedang", pernyataan:"Mengajak teman bergotong royong dapat dilakukan melalui karya bersama seperti proyek mading sekolah.", jawaban:true, penjelasan:"Mengajak lewat karya nyata dan proyek bersama memotivasi pengamalan Pancasila secara menyenangkan." },
+            { id:"S26", materi:"Mengajak Teman Mengamalkan Pancasila", level:"sedang", pernyataan:"Menjadi teladan dengan selalu menyapa guru dan ramah pada teman adalah cara efektif mengajak kebaikan.", jawaban:true, penjelasan:"Inspirasi melalui keteladanan diri sendiri adalah modal utama mengajak orang lain." },
 
-<script>
-'use strict';
-/* ===== BANK SOAL PENDIDIKAN PANCASILA KELAS VI =====
-   Format tiap soal: [pernyataan, jawaban (true = BENAR, false = SALAH), penjelasan]
-   m = mudah, s = sedang, h = hots
-   Untuk menambah soal: tambahkan baris baru di dalam array topik dan tingkat yang sesuai. */
-const BANK = {
-  T1: { nama: 'Hubungan Nilai Pancasila',
-    m: [
-      ["Pancasila terdiri atas lima sila.", true, "Pancasila memiliki lima sila yang menjadi dasar negara Indonesia."],
-      ["Lambang sila pertama Pancasila adalah bintang.", true, "Sila pertama, Ketuhanan Yang Maha Esa, berlambang bintang."],
-      ["Lambang sila ketiga Pancasila adalah rantai.", false, "Sila ketiga berlambang pohon beringin. Rantai adalah lambang sila kedua."],
-      ["Sila keempat Pancasila berlambang padi dan kapas.", false, "Sila keempat berlambang kepala banteng. Padi dan kapas adalah lambang sila kelima."],
-      ["Sila kelima Pancasila berbunyi “Keadilan Sosial bagi Seluruh Rakyat Indonesia”.", true, "Itulah bunyi sila kelima, yang berlambang padi dan kapas."],
-      ["Sila kedua Pancasila berbunyi “Persatuan Indonesia”.", false, "“Persatuan Indonesia” adalah sila ketiga. Sila kedua berbunyi “Kemanusiaan yang Adil dan Beradab”."]
-    ],
-    s: [
-      ["Kelima sila Pancasila saling berkaitan dan merupakan satu kesatuan yang utuh.", true, "Sila-sila Pancasila tidak dapat dipisahkan, karena yang satu menjiwai dan melengkapi yang lain."],
-      ["Sila-sila Pancasila boleh dilaksanakan satu per satu, sedangkan sila lainnya boleh diabaikan.", false, "Pancasila harus diamalkan secara utuh, karena semua silanya saling berkaitan."],
-      ["Urutan sila Pancasila tidak boleh dibolak-balik karena sila-silanya tersusun berurutan dan saling berkaitan.", true, "Kelima sila tersusun secara berurutan sebagai satu kesatuan yang utuh."],
-      ["Rantai pada sila kedua melambangkan ketuhanan.", false, "Rantai melambangkan manusia yang saling berhubungan (kemanusiaan). Ketuhanan dilambangkan dengan bintang."],
-      ["Pohon beringin pada sila ketiga melambangkan persatuan bangsa Indonesia.", true, "Pohon beringin yang rindang dan berakar kuat menggambarkan persatuan dan perlindungan bagi rakyat."],
-      ["Sila keempat dan sila kelima tidak memiliki hubungan sama sekali.", false, "Keputusan yang diambil lewat musyawarah (sila keempat) bertujuan menghadirkan keadilan bagi semua (sila kelima)."]
-    ],
-    h: [
-      ["Saat kerja bakti, Rani mengajak semua teman tanpa membedakan agama dan suku. Sikap Rani menunjukkan keterkaitan sila kedua dan sila ketiga.", true, "Menghargai sesama manusia (sila kedua) dan menjaga kebersamaan (sila ketiga) berjalan beriringan."],
-      ["Seorang siswa berkata, “Aku rajin beribadah, jadi aku tidak perlu menolong teman yang kesulitan.” Pendapat ini sesuai dengan keterkaitan sila pertama dan sila kedua.", false, "Sila pertama dan kedua saling berkaitan. Orang yang taat beribadah juga menunjukkan kepedulian kepada sesama."],
-      ["Panitia bantuan memutuskan lewat musyawarah dan membagikan bantuan secara adil sesuai kebutuhan. Hal ini menunjukkan keterkaitan sila keempat dan sila kelima.", true, "Musyawarah (sila keempat) dipakai untuk mewujudkan keadilan sosial (sila kelima)."],
-      ["Seorang siswa jujur saat ulangan, tetapi sering mengejek teman. Ia sudah mengamalkan Pancasila secara utuh.", false, "Mengejek teman bertentangan dengan sila kedua. Pancasila harus diamalkan secara utuh, tidak sebagian saja."],
-      ["Beni berdoa sebelum belajar dan juga menghargai pendapat temannya saat berdiskusi. Sikap Beni menunjukkan sila-sila Pancasila dapat diamalkan bersamaan.", true, "Berdoa mencerminkan sila pertama dan menghargai pendapat mencerminkan sila keempat. Keduanya dapat dilakukan sekaligus."],
-      ["Sekelompok warga memaksakan agama tertentu kepada tetangganya demi menjaga persatuan. Tindakan ini sejalan dengan sila pertama dan sila ketiga.", false, "Memaksakan agama melanggar kebebasan beragama (sila pertama). Persatuan dijaga dengan saling menghormati, bukan paksaan."]
-    ]
-  },
-  T2: { nama: 'Pengamalan Pancasila',
-    m: [
-      ["Berdoa sebelum belajar adalah contoh pengamalan sila pertama.", true, "Berdoa menunjukkan keimanan dan ketakwaan kepada Tuhan Yang Maha Esa."],
-      ["Mengejek teman yang berbeda suku adalah contoh pengamalan sila kedua.", false, "Sila kedua mengajarkan sikap adil dan beradab. Mengejek teman justru melanggarnya."],
-      ["Gotong royong membersihkan lingkungan adalah contoh pengamalan sila ketiga.", true, "Bekerja sama untuk kepentingan bersama menjaga persatuan."],
-      ["Memaksakan pendapat dalam diskusi adalah contoh pengamalan sila keempat.", false, "Sila keempat mengajarkan musyawarah dan menghargai pendapat orang lain."],
-      ["Bersikap adil kepada semua teman adalah contoh pengamalan sila kelima.", true, "Sila kelima menuntut keadilan bagi seluruh rakyat Indonesia, termasuk di antara teman."],
-      ["Menghormati teman yang beribadah berbeda agama bertentangan dengan sila pertama.", false, "Sila pertama justru mengajarkan toleransi dan saling menghormati antarumat beragama."]
-    ],
-    s: [
-      ["Melaksanakan piket kelas sesuai jadwal tanpa membeda-bedakan teman mencerminkan sikap adil.", true, "Membagi tugas secara adil adalah pengamalan sila kelima."],
-      ["Meminjamkan barang kepada teman lalu meminta imbalan besar adalah pengamalan sila kedua.", false, "Sila kedua mengajarkan menolong sesama dengan tulus, tanpa pamrih."],
-      ["Menerima hasil pemilihan ketua kelas dengan lapang dada adalah pengamalan sila keempat.", true, "Menghargai dan menerima keputusan bersama adalah sikap yang diajarkan sila keempat."],
-      ["Menjaga persatuan berarti hanya berteman dengan orang yang berasal dari suku yang sama.", false, "Persatuan Indonesia dijaga dengan berteman dan bekerja sama dengan siapa pun, apa pun sukunya."],
-      ["Menolong korban bencana tanpa memandang suku dan agama adalah pengamalan sila kedua.", true, "Menolong sesama manusia tanpa membeda-bedakan mencerminkan kemanusiaan yang adil dan beradab."],
-      ["Membantu teman yang kurang mampu bertentangan dengan sila kelima.", false, "Membantu sesama justru sejalan dengan semangat keadilan sosial dan gotong royong."]
-    ],
-    h: [
-      ["Dua kelompok ingin memakai lapangan sekolah pada waktu yang sama. Mereka berdiskusi dan sepakat memakainya bergiliran. Sikap mereka mencerminkan sila keempat dan kelima.", true, "Berdiskusi untuk mufakat adalah sila keempat, dan berbagi dengan adil adalah sila kelima."],
-      ["Sari melihat temannya kesulitan membawa buku, tetapi ia tidak mau menolong karena temannya berbeda agama. Sikap Sari sesuai dengan sila kedua.", false, "Sila kedua mengajarkan menolong sesama manusia tanpa membedakan agama."],
-      ["Warga memberi sumbangan sesuai kemampuan untuk memperbaiki jalan kampung, lalu semua ikut bekerja bakti. Sikap warga mencerminkan sila ketiga.", true, "Gotong royong demi kepentingan bersama menunjukkan semangat persatuan."],
-      ["Dito terpilih menjadi ketua kelas lewat pemungutan suara, lalu ia hanya mau mendengarkan teman dekatnya. Sikap Dito sudah mengamalkan sila keempat.", false, "Pemimpin yang baik mendengarkan pendapat semua anggota, bukan hanya teman dekat."],
-      ["Seorang siswa menemukan dompet temannya dan segera mengembalikannya, meski di dalamnya ada uang. Sikap ini mencerminkan kejujuran yang sejalan dengan nilai-nilai Pancasila.", true, "Kejujuran dan menghargai hak orang lain sejalan dengan nilai kemanusiaan dan keadilan."],
-      ["Ketika tetangga membangun tempat ibadah yang berbeda agama, Rudi ikut menghalangi karena merasa agamanya paling benar. Sikap Rudi sesuai dengan sila pertama.", false, "Sila pertama menjamin kebebasan beribadah dan mengajarkan toleransi antarumat beragama."]
-    ]
-  },
-  T3: { nama: 'Pancasila sebagai Pandangan Hidup Bangsa',
-    m: [
-      ["Pancasila adalah pandangan hidup bangsa Indonesia.", true, "Pancasila menjadi pedoman bangsa Indonesia dalam bersikap dan berperilaku."],
-      ["Pancasila hanya berlaku bagi para pejabat negara.", false, "Pancasila berlaku bagi seluruh warga negara Indonesia."],
-      ["Pancasila juga berfungsi sebagai dasar negara Indonesia.", true, "Selain pandangan hidup, Pancasila adalah dasar negara."],
-      ["Pandangan hidup bangsa Indonesia diambil dari budaya bangsa lain.", false, "Nilai-nilai Pancasila digali dari budaya dan kepribadian bangsa Indonesia sendiri."],
-      ["Pandangan hidup berarti pedoman dalam bersikap dan berperilaku sehari-hari.", true, "Pandangan hidup menjadi arah dan pegangan dalam kehidupan."],
-      ["Pancasila hanya diamalkan saat upacara bendera.", false, "Pancasila diamalkan setiap hari, di rumah, di sekolah, dan di masyarakat."]
-    ],
-    s: [
-      ["Nilai-nilai Pancasila digali dari kebiasaan dan budaya luhur bangsa Indonesia sendiri.", true, "Nilai seperti gotong royong dan musyawarah sudah lama hidup di masyarakat Indonesia."],
-      ["Sebagai pandangan hidup, Pancasila hanya dipakai untuk urusan pemerintahan, bukan untuk kehidupan sehari-hari.", false, "Pandangan hidup berlaku dalam seluruh kehidupan, termasuk kehidupan sehari-hari."],
-      ["Pancasila sebagai pandangan hidup membantu bangsa Indonesia yang beragam tetap bersatu.", true, "Nilai-nilai Pancasila menjadi pedoman bersama bagi masyarakat yang beraneka ragam."],
-      ["Setiap suku di Indonesia memiliki pandangan hidup yang berbeda sehingga bangsa Indonesia tidak punya pedoman bersama.", false, "Meskipun beragam, bangsa Indonesia memiliki satu pedoman bersama, yaitu Pancasila."],
-      ["Pancasila mencerminkan kepribadian bangsa Indonesia.", true, "Nilai-nilai Pancasila lahir dari sifat dan kebiasaan baik bangsa Indonesia."],
-      ["Pancasila dapat diganti dengan pandangan hidup lain setiap kali pemimpin berganti.", false, "Pancasila bersifat tetap sebagai pandangan hidup dan dasar negara, tidak berubah mengikuti pergantian pemimpin."]
-    ],
-    h: [
-      ["Sebuah kampung dihuni warga dari beragam suku dan agama. Mereka rutin kerja bakti dan saling menghormati hari raya. Hal ini menunjukkan Pancasila dipakai sebagai pedoman hidup bersama.", true, "Gotong royong dan toleransi adalah wujud nyata Pancasila sebagai pandangan hidup."],
-      ["Seorang siswa hafal kelima sila, tetapi sering berbohong dan mengejek teman. Menurut pandangan hidup Pancasila, siswa ini sudah mengamalkannya dengan baik.", false, "Pancasila bukan hanya dihafal, tetapi harus diwujudkan dalam sikap dan perbuatan."],
-      ["Dua teman berbeda pendapat tentang tempat belajar kelompok. Mereka berdiskusi dan memilih tempat yang disepakati. Cara ini sesuai dengan Pancasila sebagai pedoman menyelesaikan perbedaan.", true, "Menyelesaikan perbedaan dengan musyawarah sesuai dengan nilai sila keempat."],
-      ["Sebagian orang menganggap budaya asing selalu lebih baik, lalu meninggalkan semua kebiasaan baik bangsa sendiri. Sikap ini sejalan dengan Pancasila sebagai pandangan hidup bangsa.", false, "Pancasila menuntun kita menjaga kepribadian bangsa. Hal baik dari luar boleh diambil bila tidak bertentangan dengan Pancasila."],
-      ["Seorang pedagang berlaku jujur dan tidak menaikkan harga secara berlebihan saat pembeli sedang ramai. Sikap ini sejalan dengan pandangan hidup Pancasila.", true, "Kejujuran dan keadilan kepada sesama adalah cerminan nilai Pancasila."],
-      ["Karena Pancasila adalah pandangan hidup, setiap warga boleh memaksa orang lain mengikuti pendapat pribadinya.", false, "Pancasila justru mengajarkan menghargai perbedaan dan bermusyawarah, bukan memaksakan kehendak."]
-    ]
-  },
-  T4: { nama: 'Mengajak Teman Mengamalkan Pancasila',
-    m: [
-      ["Mengajak teman mengamalkan Pancasila sebaiknya dengan bahasa yang santun.", true, "Bahasa yang santun membuat teman merasa dihargai dan mau mendengarkan."],
-      ["Mengajak teman dengan cara membentak adalah cara yang baik.", false, "Membentak melukai perasaan dan membuat teman enggan menerima ajakan."],
-      ["Memberi contoh perbuatan baik lebih dulu dapat membuat teman tertarik meniru.", true, "Keteladanan lebih mudah dipercaya daripada sekadar perintah."],
-      ["Teman yang belum mau ikut harus dipaksa.", false, "Mengajak tidak boleh dengan paksaan. Kita bisa mengajak lagi dengan baik."],
-      ["Mengajak teman bergotong royong membersihkan kelas adalah contoh ajakan yang baik.", true, "Kegiatan bersama yang positif mengajak teman mengamalkan sila ketiga."],
-      ["Kita boleh mengejek teman yang belum mengamalkan Pancasila.", false, "Mengejek melanggar nilai kemanusiaan (sila kedua) dan tidak membuat teman berubah."]
-    ],
-    s: [
-      ["Menegur teman yang melanggar aturan sebaiknya dilakukan dengan baik dan tidak mempermalukannya di depan umum.", true, "Teguran yang santun menjaga harga diri teman dan lebih mudah diterima."],
-      ["Cara terbaik mengajak teman adalah dengan mengancam agar ia takut.", false, "Ancaman menimbulkan rasa takut, bukan kesadaran. Ajakan harus dengan santun."],
-      ["Melibatkan teman dalam kegiatan positif, seperti kerja bakti, adalah cara mengajak mengamalkan Pancasila.", true, "Ikut serta dalam kegiatan bersama membuat teman belajar mengamalkan nilai Pancasila."],
-      ["Kita tidak perlu mengamalkan Pancasila lebih dulu sebelum mengajak orang lain.", false, "Kita perlu memberi contoh lebih dulu agar ajakan kita dipercaya."],
-      ["Mendengarkan alasan teman terlebih dahulu membantu kita mengajaknya dengan tepat.", true, "Memahami alasan teman membuat ajakan menjadi lebih sesuai dan tidak menyinggung."],
-      ["Jika ajakan kita ditolak sekali, kita harus memusuhi teman tersebut.", false, "Kita tetap menghargai teman dan dapat mengajaknya kembali dengan baik di lain waktu."]
-    ],
-    h: [
-      ["Ayu melihat temannya membuang sampah sembarangan. Ayu memungut sampah itu lalu mengajak temannya dengan ramah membuang ke tempat sampah. Cara Ayu tepat untuk mengajak mengamalkan Pancasila.", true, "Ayu memberi contoh dan mengajak dengan santun, sehingga temannya lebih mudah menerima."],
-      ["Bimo ingin teman-temannya jujur saat ulangan, tetapi ia sendiri menyontek. Cara Bimo sudah tepat dalam mengajak teman mengamalkan Pancasila.", false, "Mengajak harus disertai contoh. Bimo sendiri tidak jujur sehingga ajakannya tidak patut dipercaya."],
-      ["Seorang siswa tahu temannya sering datang terlambat. Ia menanyakan penyebabnya dengan baik, lalu mengajak berangkat bersama. Sikap siswa ini tepat.", true, "Mendengarkan alasan dan memberi solusi bersama adalah cara mengajak yang santun dan peduli."],
-      ["Agar kelas rukun, Lina mengumumkan di depan kelas bahwa Rafi sering berbuat salah supaya Rafi jera. Cara Lina tepat.", false, "Mempermalukan teman di depan umum melanggar nilai kemanusiaan. Teguran sebaiknya disampaikan baik-baik."],
-      ["Ketua kelas mengajak teman menyusun jadwal piket bersama sehingga semua merasa dilibatkan. Ini adalah cara mengajak teman mengamalkan Pancasila lewat kegiatan bersama.", true, "Melibatkan semua teman mencerminkan musyawarah, keadilan, dan kebersamaan."],
-      ["Dani menyuruh temannya yang berbeda agama untuk beribadah seagama dengannya agar kelas kompak. Ajakan Dani sesuai dengan Pancasila.", false, "Setiap orang bebas beribadah sesuai agamanya. Kekompakan dijaga dengan saling menghormati."]
-    ]
-  },
-  T5: { nama: 'Nilai dan Norma',
-    m: [
-      ["Nilai adalah sesuatu yang dianggap baik dan berharga oleh masyarakat.", true, "Contoh nilai: kejujuran, kerukunan, dan tolong-menolong."],
-      ["Norma adalah aturan yang tidak perlu ditaati.", false, "Norma adalah aturan yang harus ditaati dalam kehidupan bermasyarakat."],
-      ["Norma agama bersumber dari ajaran agama.", true, "Norma agama berasal dari perintah dan larangan dalam ajaran agama."],
-      ["Norma hukum tidak memiliki sanksi.", false, "Norma hukum memiliki sanksi yang tegas bagi yang melanggar."],
-      ["Mengucapkan terima kasih saat diberi bantuan termasuk norma kesopanan.", true, "Norma kesopanan mengatur sopan santun dalam pergaulan."],
-      ["Kejujuran termasuk nilai yang tidak baik.", false, "Kejujuran adalah nilai yang baik dan dijunjung tinggi masyarakat."]
-    ],
-    s: [
-      ["Norma kesusilaan bersumber dari hati nurani manusia.", true, "Hati nurani membantu kita membedakan perbuatan baik dan buruk."],
-      ["Berbicara kasar kepada orang yang lebih tua melanggar norma kesopanan.", true, "Berbicara kasar tidak sesuai sopan santun yang berlaku di masyarakat."],
-      ["Mematuhi rambu lalu lintas adalah contoh menaati norma hukum.", true, "Rambu lalu lintas diatur oleh hukum, dan pelanggarnya dapat dikenai sanksi."],
-      ["Norma kesopanan bersumber dari undang-undang.", false, "Norma kesopanan bersumber dari kebiasaan dan adat yang berlaku di masyarakat. Undang-undang adalah sumber norma hukum."],
-      ["Nilai dan norma tidak berhubungan, karena nilai tidak memengaruhi aturan.", false, "Norma lahir dari nilai yang dianggap baik oleh masyarakat."],
-      ["Menyontek saat ulangan dapat dianggap boleh jika tidak ketahuan guru.", false, "Menyontek melanggar norma kejujuran dan tata tertib sekolah, ketahuan atau tidak."]
-    ],
-    h: [
-      ["Di angkutan umum, Dika memberikan tempat duduknya kepada ibu hamil. Perbuatan Dika menunjukkan nilai kepedulian dan ketaatan pada norma kesopanan.", true, "Mengalah demi orang yang lebih membutuhkan adalah wujud kepedulian dan sopan santun."],
-      ["Seorang siswa tidak mau menaati aturan sekolah karena menurutnya aturan hanya membatasi kebebasan. Pendapat itu benar karena norma tidak bermanfaat.", false, "Norma bermanfaat menciptakan ketertiban dan keadilan bagi semua orang."],
-      ["Warga menyepakati tidak membuat keributan setelah pukul 22.00 agar semua dapat beristirahat. Aturan ini lahir dari nilai saling menghormati.", true, "Norma yang disepakati berasal dari nilai yang dianggap baik bersama."],
-      ["Pengendara motor hanya berhenti saat lampu merah jika ada polisi. Sikapnya sudah menunjukkan kesadaran menaati norma hukum.", false, "Menaati norma hukum harus dengan kesadaran sendiri, bukan karena takut diawasi."],
-      ["Seorang siswa menemukan uang di kelas dan menyerahkannya kepada guru meski tidak ada yang melihat. Perilaku ini menunjukkan ia menaati norma kesusilaan.", true, "Hati nuraninya menuntun ia berbuat jujur walau tidak diawasi."],
-      ["Karena tidak ada hukuman tertulis, tidak masalah bila kita berkata kasar kepada teman. Pendapat ini benar.", false, "Berkata kasar melanggar norma kesopanan dan kesusilaan, yang sanksinya berupa teguran dan celaan masyarakat."]
-    ]
-  },
-  T6: { nama: 'Hak dan Kewajiban',
-    m: [
-      ["Hak adalah sesuatu yang berhak kita terima.", true, "Contoh hak siswa: mendapat pelajaran dan perlakuan yang baik di sekolah."],
-      ["Kewajiban adalah sesuatu yang boleh dilakukan atau tidak.", false, "Kewajiban adalah sesuatu yang harus dilaksanakan."],
-      ["Belajar dengan sungguh-sungguh adalah kewajiban siswa.", true, "Siswa wajib belajar dengan sungguh-sungguh."],
-      ["Mendapat pelajaran dari guru adalah kewajiban siswa.", false, "Mendapat pelajaran dari guru adalah hak siswa."],
-      ["Menjaga kebersihan kelas adalah contoh kewajiban siswa.", true, "Semua siswa wajib ikut menjaga kebersihan kelas."],
-      ["Setiap orang hanya memiliki hak dan tidak memiliki kewajiban.", false, "Setiap orang memiliki hak sekaligus kewajiban."]
-    ],
-    s: [
-      ["Hak dan kewajiban harus dilaksanakan secara seimbang.", true, "Menerima hak harus diimbangi dengan melaksanakan kewajiban."],
-      ["Seseorang boleh menuntut hak sebanyak-banyaknya tanpa melaksanakan kewajiban.", false, "Menuntut hak tanpa melaksanakan kewajiban tidak adil dan tidak seimbang."],
-      ["Hak mendapat perlindungan di sekolah diimbangi dengan kewajiban menaati tata tertib.", true, "Setiap hak selalu disertai kewajiban."],
-      ["Menghormati hak orang lain bukan bagian dari kewajiban kita.", false, "Menghormati hak orang lain adalah kewajiban setiap orang."],
-      ["Anak berhak bermain dan beristirahat, tetapi tetap harus melaksanakan kewajiban belajar.", true, "Hak dan kewajiban dijalankan bersamaan agar seimbang."],
-      ["Kewajiban hanya ada di sekolah dan tidak ada di rumah.", false, "Di rumah pun ada kewajiban, misalnya membantu orang tua dan menjaga kebersihan."]
-    ],
-    h: [
-      ["Rina menggunakan haknya bermain bersama teman, tetapi tetap pulang tepat waktu untuk membantu ibu dan belajar. Sikap Rina menunjukkan keseimbangan hak dan kewajiban.", true, "Rina menikmati hak bermain sambil melaksanakan kewajibannya."],
-      ["Andi menuntut sekolah menyediakan fasilitas lengkap, tetapi ia tidak mau menjaga fasilitas yang ada. Tuntutan Andi sudah seimbang antara hak dan kewajiban.", false, "Andi menuntut hak tetapi mengabaikan kewajiban menjaga fasilitas."],
-      ["Warga berhak mendapat lingkungan yang bersih, sehingga mereka juga wajib membuang sampah pada tempatnya. Pernyataan ini menunjukkan hak dan kewajiban saling berkaitan.", true, "Hak atas lingkungan bersih dapat terwujud bila semua warga menjalankan kewajiban."],
-      ["Saat kerja kelompok, Tono merasa berhak mendapat nilai yang sama dengan teman-temannya walau ia tidak mengerjakan tugas. Pendapat Tono dapat dibenarkan.", false, "Hak mendapat nilai yang baik harus diimbangi dengan kewajiban ikut mengerjakan tugas."],
-      ["Karena teman berhak belajar dengan tenang, kewajiban kita adalah tidak membuat gaduh di kelas.", true, "Menghormati hak orang lain adalah bagian dari kewajiban kita."],
-      ["Dewi mengejek pendapat temannya dan berkata itu haknya berpendapat. Hal ini dibenarkan karena hak berpendapat tidak ada batasnya.", false, "Hak berpendapat harus disertai kewajiban menghormati orang lain, sehingga tidak boleh mengejek."]
-    ]
-  },
-  T7: { nama: 'Musyawarah',
-    m: [
-      ["Musyawarah adalah pembahasan bersama untuk mencapai kesepakatan.", true, "Musyawarah dilakukan agar semua pihak dapat menyampaikan pendapat dan mencapai mufakat."],
-      ["Musyawarah dilakukan dengan cara memaksakan pendapat.", false, "Dalam musyawarah, pendapat disampaikan dan dibahas bersama tanpa paksaan."],
-      ["Hasil musyawarah yang disepakati bersama disebut mufakat.", true, "Mufakat berarti kesepakatan bersama."],
-      ["Dalam musyawarah, kita tidak perlu mendengarkan pendapat orang lain.", false, "Mendengarkan pendapat orang lain adalah sikap penting dalam musyawarah."],
-      ["Memutuskan kegiatan kelas lewat musyawarah adalah contoh pengamalan sila keempat.", true, "Sila keempat mengajarkan pengambilan keputusan melalui musyawarah."],
-      ["Hasil musyawarah hanya wajib dilaksanakan oleh orang yang setuju.", false, "Hasil musyawarah harus dilaksanakan oleh semua orang yang ikut bermusyawarah."]
-    ],
-    s: [
-      ["Tujuan musyawarah adalah mencapai mufakat demi kepentingan bersama.", true, "Musyawarah bertujuan menghasilkan keputusan yang baik bagi semua pihak."],
-      ["Orang yang pendapatnya tidak dipilih dalam musyawarah boleh tidak menjalankan keputusan.", false, "Semua peserta wajib menerima dan melaksanakan hasil musyawarah."],
-      ["Salah satu manfaat musyawarah adalah mempererat persatuan dan kerukunan.", true, "Keputusan yang diambil bersama membuat semua pihak merasa dihargai."],
-      ["Musyawarah hanya dapat dilakukan di lingkungan pemerintahan.", false, "Musyawarah dapat dilakukan di keluarga, sekolah, dan masyarakat."],
-      ["Saat bermusyawarah, kita perlu menyampaikan pendapat dengan sopan dan menghargai pendapat orang lain.", true, "Sikap sopan dan saling menghargai membuat musyawarah berjalan baik."],
-      ["Jika musyawarah sulit mencapai mufakat, perselisihan boleh diselesaikan dengan kekerasan.", false, "Perbedaan pendapat diselesaikan dengan cara damai, bukan dengan kekerasan."]
-    ],
-    h: [
-      ["Dalam rapat kelas, pendapat Maya tidak dipilih untuk lomba kebersihan. Maya tetap ikut melaksanakan keputusan dengan senang hati. Sikap Maya mencerminkan semangat musyawarah.", true, "Menerima dan melaksanakan hasil musyawarah adalah sikap yang benar."],
-      ["Ketua kelompok langsung menentukan topik tanpa bertanya kepada anggota karena merasa pendapatnya paling benar. Cara ini sesuai dengan prinsip musyawarah.", false, "Musyawarah menuntut kesempatan bagi semua anggota untuk menyampaikan pendapat."],
-      ["Keluarga Raka bermusyawarah menentukan tempat liburan dengan mendengarkan pendapat semua anggota. Hal ini menunjukkan musyawarah dapat dilakukan di dalam keluarga.", true, "Musyawarah dapat dilakukan di mana saja, termasuk di lingkungan keluarga."],
-      ["Dalam musyawarah RT, dua warga berdebat sambil berteriak dan saling menyalahkan agar pendapatnya menang. Sikap mereka sudah tepat.", false, "Musyawarah harus berlangsung tenang, sopan, dan saling menghargai."],
-      ["Hasil musyawarah memutuskan dana kas kelas dipakai membeli alat kebersihan. Seorang siswa yang semula ingin membeli hiasan kelas tetap mendukung keputusan itu. Sikap siswa ini sejalan dengan sila keempat.", true, "Menerima keputusan bersama dengan lapang dada adalah sikap yang diajarkan sila keempat."],
-      ["Dalam rapat kelas, hanya siswa yang pandai berbicara yang boleh memberi pendapat, sedangkan siswa pemalu diminta diam. Cara ini sesuai dengan prinsip musyawarah.", false, "Dalam musyawarah, semua peserta berhak menyampaikan pendapat, termasuk yang pemalu."]
-    ]
-  }
-};
+            // Materi 5
+            { id:"S27", materi:"Nilai Norma Hak Kewajiban", level:"sedang", pernyataan:"Norma kesusilaan berlaku universal bagi seluruh manusia di dunia tanpa terbatas daerah.", jawaban:true, penjelasan:"Hati nurani manusia di mana pun memiliki prinsip dasar moral yang sama." },
+            { id:"S28", materi:"Nilai Norma Hak Kewajiban", level:"sedang", pernyataan:"Siswa yang hanya menuntut fasilitas sekolah lengkap tanpa menjaga kebersihannya sudah menjalankan hak dan kewajiban secara seimbang.", jawaban:false, penjelasan:"Hak dan kewajiban harus dilaksanakan secara seimbang; fasilitas harus dijaga sebagai kewajiban." },
+            { id:"S29", materi:"Nilai Norma Hak Kewajiban", level:"sedang", pernyataan:"Sanksi bagi pelanggar norma kesopanan umumnya berupa cemoohan, dikucilkan, atau rasa malu.", jawaban:true, penjelasan:"Norma kesopanan bersumber dari pergaulan masyarakat sehingga sanksinya bersifat sosial." },
+            { id:"S30", materi:"Nilai Norma Hak Kewajiban", level:"sedang", pernyataan:"Menjaga kebersihan dan fasilitas kamar mandi umum adalah wujud pelaksanaan kewajiban warga.", jawaban:true, penjelasan:"Fasilitas umum dinikmati bersama sehingga menjaganya adalah kewajiban sosial." },
+            { id:"S31", materi:"Nilai Norma Hak Kewajiban", level:"sedang", pernyataan:"Memaksakan aturan adat suatu daerah kepada wisatawan luar daerah secara kekerasan dibolehkan dalam norma agama.", jawaban:false, penjelasan:"Semua norma menolak tindakan kekerasan dan pemaksaan kehendak." },
+            { id:"S32", materi:"Nilai Norma Hak Kewajiban", level:"sedang", pernyataan:"Setiap anak berhak mendapatkan perlindungan dari tindakan kekerasan dan diskriminasi di sekolah.", jawaban:true, penjelasan:"Hak perlindungan anak dijamin oleh undang-undang dan norma hukum." },
+            { id:"S33", materi:"Nilai Norma Hak Kewajiban", level:"sedang", pernyataan:"Melanggar rambu lalu lintas hanya merugikan diri sendiri tanpa mengganggu hak pengemudi lain.", jawaban:false, penjelasan:"Melanggar lalu lintas membahayakan keselamatan umum dan merenggut hak pengguna jalan lain." },
 
-/* ===== LOGIKA MURNI (tanpa DOM): pengacakan soal, skor, zona gerak ===== */
-const LEVELS = {
-  mudah:  { limit: 15, label: 'Mudah' },
-  sedang: { limit: 20, label: 'Sedang' },
-  hots:   { limit: 30, label: 'HOTS' }
-};
-const LEVEL_KEYS = ['mudah', 'sedang', 'hots'];
-const MODE_LABEL = { mudah: 'Mudah', sedang: 'Sedang', campuran: 'Campuran (HOTS)' };
-const MAX_PER_Q = 150;
+            // Materi 6
+            { id:"S34", materi:"Musyawarah Mufakat", level:"sedang", pernyataan:"Prinsip musyawarah mufakat menekankan bahwa tidak ada pihak yang merasa dikalahkan.", jawaban:true, penjelasan:"Musyawarah mufakat mencari solusi bersama yang memuaskan dan disepakati semua pihak." },
+            { id:"S35", materi:"Musyawarah Mufakat", level:"sedang", pernyataan:"Dalam diskusi kelas, pendapat siswa yang paling pandai secara akademik wajib diterima tanpa disanggah.", jawaban:false, penjelasan:"Setiap peserta musyawarah memiliki hak dan kesetaraan yang sama untuk berpendapat." },
+            { id:"S36", materi:"Musyawarah Mufakat", level:"sedang", pernyataan:"Menghormati keputusan bersama tetap dilakukan meskipun usulan pribadi kita tidak terpilih.", jawaban:true, penjelasan:"Sikap legawa dan lapang dada adalah etika utama dalam melaksanakan mufakat." },
+            { id:"S37", materi:"Musyawarah Mufakat", level:"sedang", pernyataan:"Voting dalam musyawarah selalu dilakukan di awal diskusi tanpa mencoba bertukar pikiran dahulu.", jawaban:false, penjelasan:"Voting hanya menjadi pilihan terakhir bila musyawarah mufakat menemui jalan buntu." },
+            { id:"S38", materi:"Musyawarah Mufakat", level:"sedang", pernyataan:"Semangat kekeluargaan menjadi landasan utama saat melaksanakan musyawarah di lingkungan tempat tinggal.", jawaban:true, penjelasan:"Musyawarah dilandasi atas rasa persaudaraan dan kekeluargaan Sila Ke-4." },
+            { id:"S39", materi:"Musyawarah Mufakat", level:"sedang", pernyataan:"Meninggalkan ruangan musyawarah secara sepihak saat usulan ditolak merupakan sikap demokratis.", jawaban:false, penjelasan:"Aksi mogok atau keluar dari musyawarah menunjukkan sikap tidak bertanggung jawab." },
+            { id:"S40", materi:"Musyawarah Mufakat", level:"sedang", pernyataan:"Musyawarah mufakat menghemat waktu dibandingkan pengambilan keputusan secara sepihak oleh pimpinan.", jawaban:false, penjelasan:"Musyawarah butuh waktu lebih banyak untuk diskusi, namun hasilnya adil dan didukung bersama." },
 
-/* Ratakan bank soal menjadi satu daftar dengan id unik */
-const BANK_FLAT = [];
-(function () {
-  const L = { m: 'mudah', s: 'sedang', h: 'hots' };
-  Object.keys(BANK).forEach(function (code) {
-    const t = BANK[code];
-    ['m', 's', 'h'].forEach(function (k) {
-      t[k].forEach(function (it, i) {
-        BANK_FLAT.push({
-          id: code + '-' + k.toUpperCase() + '-' + String(i + 1).padStart(2, '0'),
-          topikKode: code, topik: t.nama, level: L[k],
-          pernyataan: it[0], jawaban: it[1], penjelasan: it[2]
-        });
-      });
-    });
-  });
-})();
+            /* ---------------- LEVEL HOTS (40 SOAL) ---------------- */
+            // Materi 1
+            { id:"H01", materi:"Hubungan Nilai Pancasila", level:"hots", pernyataan:"Kelompok yang selalu memaksakan hasil suara terbanyak tanpa mendengar alasan kelompok lain sudah mengamalkan Sila Ke-4 secara utuh.", jawaban:false, penjelasan:"Sila Ke-4 menekankan hikmat kebijaksanaan dan musyawarah, yaitu mendengar dan menghargai pendapat semua pihak." },
+            { id:"H02", materi:"Hubungan Nilai Pancasila", level:"hots", pernyataan:"Kewajiban menjaga kelestarian alam (Sila 5) sebenarnya bersumber dari rasa syukur kepada Tuhan YME (Sila 1).", jawaban:true, penjelasan:"Merawat alam sebagai ciptaan Tuhan (Sila 1) mendukung kesejahteraan bersama secara adil (Sila 5)." },
+            { id:"H03", materi:"Hubungan Nilai Pancasila", level:"hots", pernyataan:"Sikap tenggang rasa kepada teman yang berbeda agama hanya mencakup pengamalan Sila Pertama tanpa berkaitan dengan Sila Kedua.", jawaban:false, penjelasan:"Toleransi beragama (Sila 1) juga merupakan perwujudan sikap memanusiakan sesama (Sila 2)." },
+            { id:"H04", materi:"Hubungan Nilai Pancasila", level:"hots", pernyataan:"Pancasila bersifat piramidal artinya Sila Pertama mendasari Sila Kedua, Ketiga, Keempat, dan Kelima.", jawaban:true, penjelasan:"Secara struktur, Sila Ke-1 menjadi dasar keagamaan dan moral bagi keempat sila di bawahnya." },
+            { id:"H05", materi:"Hubungan Nilai Pancasila", level:"hots", pernyataan:"Pembangunan ekonomi yang hanya memakmurkan sebagian kecil masyarakat kota sudah sejalan dengan hubungan Sila 3 dan 5.", jawaban:false, penjelasan:"Pembangunan yang adil (Sila 5) harus merata ke seluruh pelosok tanah air demi menjaga persatuan (Sila 3)." },
+            { id:"H06", materi:"Hubungan Nilai Pancasila", level:"hots", pernyataan:"Mengkritik kebijakan pemerintah secara santun melalui jalur hukum mengintegrasikan pengamalan Sila Ke-2, 4, dan 5.", jawaban:true, penjelasan:"Menyampaikan aspirasi secara beradab (Sila 2) melalui musyawarah/hukum (Sila 4) demi keadilan (Sila 5)." },
+            { id:"H07", materi:"Hubungan Nilai Pancasila", level:"hots", pernyataan:"Memisahkan nilai Ketuhanan dari nilai Kemanusiaan dapat memicu tindakan radikalisme yang merusak persatuan.", jawaban:true, penjelasan:"Jika nilai agama dipisahkan dari rasa kemanusiaan, persatuan bangsa akan terancam." },
 
-/* Fisher-Yates */
-function shuffle(a) {
-  const r = a.slice();
-  for (let i = r.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const tmp = r[i]; r[i] = r[j]; r[j] = tmp;
-  }
-  return r;
-}
-const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
-function median(arr) {
-  const s = arr.slice().sort((a, b) => a - b);
-  const m = s.length >> 1;
-  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
-}
+            // Materi 2
+            { id:"H08", materi:"Pengamalan Pancasila", level:"hots", pernyataan:"Eko bersedia meminjamkan pensil kepada temannya, tetapi meminta imbalan uang sewa. Sikap Eko mencerminkan Sila Ke-2.", jawaban:false, penjelasan:"Tolong-menolong dalam kemanusiaan (Sila 2) harus dilakukan dengan ikhlas tanpa mencari keuntungan." },
+            { id:"H09", materi:"Pengamalan Pancasila", level:"hots", pernyataan:"Seorang siswa menolak mengikuti gotong royong kelas dengan alasan sudah membayar iuran kas. Sikap ini keliru dalam pengamalan Pancasila.", jawaban:true, penjelasan:"Gotong royong (Sila 5) membutuhkan partisipasi fisik dan kebersamaan, tidak bisa digantikan hanya uang." },
+            { id:"H10", materi:"Pengamalan Pancasila", level:"hots", pernyataan:"Menyebarkan informasi hoaks di media sosial demi membela teman satu suku sejalan dengan pengamalan Sila Ketiga.", jawaban:false, penjelasan:"Hoaks merusak persatuan dan kebenaran; Sila 3 menghendaki persatuan atas dasar kebenaran." },
+            { id:"H11", materi:"Pengamalan Pancasila", level:"hots", pernyataan:"Mendahulukan antrean untuk warga lansia di bank merupakan bentuk keadilan sosial Sila Ke-5.", jawaban:true, penjelasan:"Keadilan tidak selalu sama rata, melainkan memberikan perlindungan sesuai kebutuhan khusus (proporsional)." },
+            { id:"H12", materi:"Pengamalan Pancasila", level:"hots", pernyataan:"Penggunaan teknologi AI secara bijak untuk membantu pendidikan anak kurang mampu adalah bentuk pengamalan Sila Ke-5 di era modern.", jawaban:true, penjelasan:"Memanfaat teknologi untuk pemerataan keadilan pendidikan adalah bentuk pengamalan Sila Ke-5." },
+            { id:"H13", materi:"Pengamalan Pancasila", level:"hots", pernyataan:"Menghargai hasil karya seni teman yang belum sempurna dengan memberi kritik membangun adalah wujud Sila Ke-5.", jawaban:true, penjelasan:"Menghargai karya orang lain dan memberi masukan positif adalah pengamalan nilai Sila Ke-5." },
+            { id:"H14", materi:"Pengamalan Pancasila", level:"hots", pernyataan:"Rani memilih membuang sisa makanan mahal daripada membagikannya karena merasa itu barang miliknya. Tindakan Rani mengamalkan Sila Ke-5.", jawaban:false, penjelasan:"Perilaku boros dan menyia-nyiakan makanan bertentangan dengan Sila Ke-5 (gaya hidup hemat)." },
 
-/* Soal yang sudah dipakai (agar permainan berikutnya memprioritaskan soal baru) */
-const USED_KEY = 'pancasila_used_ids';
-const used = new Set();
-try {
-  JSON.parse(sessionStorage.getItem(USED_KEY) || '[]').forEach(function (id) { used.add(id); });
-} catch (e) { /* abaikan: pakai memori saja */ }
-function saveUsed() {
-  try { sessionStorage.setItem(USED_KEY, JSON.stringify(Array.from(used))); } catch (e) { /* abaikan */ }
-}
+            // Materi 3
+            { id:"H15", materi:"Pancasila Pandangan Hidup", level:"hots", pernyataan:"Menjadikan Pancasila sebagai pandangan hidup berarti kita menolak semua teknologi baru dari negara luar.", jawaban:false, penjelasan:"Pancasila terbuka terhadap kemajuan teknologi asing selama tidak bertentangan dengan moral bangsa." },
+            { id:"H16", materi:"Pancasila Pandangan Hidup", level:"hots", pernyataan:"Globalisasi dapat mengikis kepribadian bangsa jika warga negara tidak memegang teguh nilai Pancasila.", jawaban:true, penjelasan:"Pancasila berfungsi sebagai benteng moral dan filter kebudayaan dalam era globalisasi." },
+            { id:"H17", materi:"Pancasila Pandangan Hidup", level:"hots", pernyataan:"Toleransi beragama di Indonesia berarti menggabungkan ajaran semua agama menjadi satu agama baru.", jawaban:false, penjelasan:"Toleransi adalah saling menghormati keyakinan masing-masing tanpa mencampuradukkan ajaran agama." },
+            { id:"H18", materi:"Pancasila Pandangan Hidup", level:"hots", pernyataan:"Keberagaman suku bangsa Indonesia menjadi kekuatan jika diikat oleh pandangan hidup Pancasila.", jawaban:true, penjelasan:"Semboyan Bhinneka Tunggal Ika yang dijiwai Pancasila mengubah perbedaan menjadi kekayaan bangsa." },
+            { id:"H19", materi:"Pancasila Pandangan Hidup", level:"hots", pernyataan:"Sikap individualis yang hanya memikirkan diri sendiri sangat cocok dengan pandangan hidup Pancasila.", jawaban:false, penjelasan:"Pancasila mengedepankan semangat kekeluargaan dan kepedulian sosial, bukan individualisme." },
+            { id:"H20", materi:"Pancasila Pandangan Hidup", level:"hots", pernyataan:"Pancasila mampu menyelesaikan persoalan bangsa karena nilainya digali dari akar budaya luhur Indonesia sendiri.", jawaban:true, penjelasan:"Nilai Pancasila bukan tiruan negara lain, melainkan tradisi dan pandangan hidup asli nusantara." },
 
-function composition(mode, n) {
-  if (mode === 'mudah')  return { mudah: n, sedang: 0, hots: 0 };
-  if (mode === 'sedang') return { mudah: 0, sedang: n, hots: 0 };
-  const m = Math.round(0.3 * n), s = Math.round(0.3 * n);
-  return { mudah: m, sedang: s, hots: n - m - s };
-}
+            // Materi 4
+            { id:"H21", materi:"Mengajak Teman Mengamalkan Pancasila", level:"hots", pernyataan:"Mengancam akan melaporkan teman ke guru jika tidak mau beribadah adalah teknik ajakan yang sesuai Pancasila.", jawaban:false, penjelasan:"Ajakan kebaikan harus timbul dari kesadaran nurani tanpa intimidasi atau ancaman." },
+            { id:"H22", materi:"Mengajak Teman Mengamalkan Pancasila", level:"hots", pernyataan:"Membuat konten vlogger singkat tentang toleransi belajar kelompok dapat menginspirasi teman sebaya.", jawaban:true, penjelasan:"Penggunaan media kreatif digital sangat efektif mengajak generasi muda mengamalkan Pancasila." },
+            { id:"H23", materi:"Mengajak Teman Mengamalkan Pancasila", level:"hots", pernyataan:"Mengajak teman peduli lingkungan dapat dimulai dengan memilah sampah organik dan anorganik bersama.", jawaban:true, penjelasan:"Aksi nyata dari hal kecil membentuk kebiasaan bersama menjaga kelestarian lingkungan." },
+            { id:"H24", materi:"Mengajak Teman Mengamalkan Pancasila", level:"hots", pernyataan:"Ketika teman tidak setuju diajak gotong royong, kita langsung mengeluarkan dia dari grup berteman.", jawaban:false, penjelasan:"Tindakan diskriminatif dan mengucilkan bertentangan dengan nilai persatuan dan kemanusiaan." },
+            { id:"H25", materi:"Mengajak Teman Mengamalkan Pancasila", level:"hots", pernyataan:"Memberikan apresiasi atau pujian tulus saat teman berbuat jujur mendorong teman lain meniru kebaikan tersebut.", jawaban:true, penjelasan:"Penguatan positif (pujian) memotivasi perbuatan baik terulang dan meluas." },
+            { id:"H26", materi:"Mengajak Teman Mengamalkan Pancasila", level:"hots", pernyataan:"Mengajak teman mengamalkan Pancasila cukup dengan menghafal teks kelima sila setiap hari.", jawaban:false, penjelasan:"Pengamalan Pancasila bukan sekadar hafalan verbal, melainkan wujud tindakan nyata." },
 
-/* Ambil c soal dari satu tingkat: utamakan yang belum pernah muncul, sebar merata antar topik */
-function pickLevel(level, c) {
-  const pool = BANK_FLAT.filter(q => q.level === level);
-  let fresh = pool.filter(q => !used.has(q.id));
-  if (fresh.length < c) {
-    pool.forEach(q => used.delete(q.id));
-    fresh = pool.slice();
-  }
-  const byTopic = {};
-  shuffle(fresh).forEach(q => { (byTopic[q.topikKode] = byTopic[q.topikKode] || []).push(q); });
-  const topics = shuffle(Object.keys(byTopic));
-  const out = [];
-  let round = 0;
-  while (out.length < c) {
-    let added = false;
-    for (const t of topics) {
-      if (out.length >= c) break;
-      if (byTopic[t][round]) { out.push(byTopic[t][round]); added = true; }
-    }
-    if (!added) break;
-    round++;
-  }
-  return out;
-}
+            // Materi 5
+            { id:"H27", materi:"Nilai Norma Hak Kewajiban", level:"hots", pernyataan:"Ketika norma hukum dan norma kesopanan berbenturan, aturan hukum negara yang sah wajib diutamakan.", jawaban:true, penjelasan:"Norma hukum memiliki kepastian dan kekuatan mengikat tertinggi di dalam negara hukum." },
+            { id:"H28", materi:"Nilai Norma Hak Kewajiban", level:"hots", pernyataan:"Seseorang boleh menggunakan hak kebebasan berpendapatnya untuk merendahkan martabat orang lain.", jawaban:false, penjelasan:"Hak berpendapat dibatasi oleh hak orang lain untuk dihormati kehormatan dan martabatnya." },
+            { id:"H29", materi:"Nilai Norma Hak Kewajiban", level:"hots", pernyataan:"Mematuhi rambu lalu lintas saat tidak ada petugas polisi merupakan wujud kesadaran norma hukum yang tinggi.", jawaban:true, penjelasan:"Kesadaran hukum sejati muncul dari dalam diri sendiri, bukan karena takut hukuman petugas." },
+            { id:"H30", materi:"Nilai Norma Hak Kewajiban", level:"hots", pernyataan:"Mendapatkan lingkungan hidup yang bersih adalah hak, sementara membuang sampah pada tempatnya adalah kewajiban yang seimbang.", jawaban:true, penjelasan:"Pemenuhan hak lingkungan bersih membutuhkan pelaksanaan kewajiban menjaga kebersihan." },
+            { id:"H31", materi:"Nilai Norma Hak Kewajiban", level:"hots", pernyataan:"Peraturan sekolah dibuat hanya untuk membatasi kebebasan siswa tanpa memberi manfaat.", jawaban:false, penjelasan:"Tata tertib sekolah bertujuan menciptakan ketertiban, keamanan, dan kebaikan bersama." },
+            { id:"H32", materi:"Nilai Norma Hak Kewajiban", level:"hots", pernyataan:"Sanksi rasa malu dan penyesalan mendalam akibat berbohong berasal dari pelanggaran norma agama dan kesusilaan.", jawaban:true, penjelasan:"Suara hati nurani (kesusilaan) dan ajaran agama menimbulkan rasa bersalah saat berbuat bohong." },
+            { id:"H33", materi:"Nilai Norma Hak Kewajiban", level:"hots", pernyataan:"Kewajiban bela negara hanya milik anggota TNI dan Polri, rakyat biasa tidak memiliki kewajiban tersebut.", jawaban:false, penjelasan:"Setiap warga negara berhak dan wajib ikut serta dalam upaya pembelaan negara sesuai profesinya." },
 
-function maxRun(list) {
-  let best = 0, run = 0, prev = null;
-  list.forEach(q => {
-    run = (prev === q.jawaban) ? run + 1 : 1;
-    prev = q.jawaban;
-    if (run > best) best = run;
-  });
-  return best;
-}
+            // Materi 6
+            { id:"H34", materi:"Musyawarah Mufakat", level:"hots", pernyataan:"Mufakat dalam musyawarah lebih unggul dibanding voting karena mufakat menghargai seluruh aspirasi peserta.", jawaban:true, penjelasan:"Mufakat tidak menghasilkan kelompok menang/kalah melainkan kesepakatan utuh bersama." },
+            { id:"H35", materi:"Musyawarah Mufakat", level:"hots", pernyataan:"Jika musyawarah mufakat deadlock (buntu), keputusan boleh diambil langsung oleh ketua tanpa kompromi.", jawaban:false, penjelasan:"Bila musyawarah buntu, solusi berikutnya adalah voting (suara terbanyak), bukan keputusan otoriter ketua." },
+            { id:"H36", materi:"Musyawarah Mufakat", level:"hots", pernyataan:"Menolak hasil keputusan musyawarah hanya karena ide pribadi tidak terpakai menunjukkan sikap tidak bertanggung jawab.", jawaban:true, penjelasan:"Peserta musyawarah wajib menjiwai dan melaksanakan hasil keputusan bersama secara lapang dada." },
+            { id:"H37", materi:"Musyawarah Mufakat", level:"hots", pernyataan:"Dalam musyawarah desa, pendapat petani miskin dan tokoh kaya memiliki bobot kesetaraan hak yang sama.", jawaban:true, penjelasan:"Demokrasi Pancasila menjamin persamaan kedudukan seluruh warga negara tanpa memandang status sosial." },
+            { id:"H38", materi:"Musyawarah Mufakat", level:"hots", pernyataan:"Musyawarah yang efisien adalah musyawarah yang tidak memberikan kesempatan peserta bertanya agar cepat selesai.", jawaban:false, penjelasan:"Musyawarah yang baik harus memberikan kesempatan bertanya dan berpendapat secara demokratis." },
+            { id:"H39", materi:"Musyawarah Mufakat", level:"hots", pernyataan:"Hasil musyawarah yang baik tidak boleh bertentangan dengan moral, norma agama, dan Pancasila.", jawaban:true, penjelasan:"Keputusan musyawarah harus dapat dipertanggungjawabkan secara moral kepada Tuhan dan masyarakat." },
+            { id:"H40", materi:"Musyawarah Mufakat", level:"hots", pernyataan:"Menghargai pendapat lawan diskusi merupakan cerminan penggabungan nilai Sila Ke-2 dan Ke-4.", jawaban:true, penjelasan:"Sikap sopan memanusiakan (Sila 2) dalam ruang diskusi demokrasi (Sila 4)." }
+        ];
 
-/* Bangun satu permainan: jumlah soal 10/15/20 dipilih acak oleh sistem */
-function buildGame(mode) {
-  const n = [10, 15, 20][Math.floor(Math.random() * 3)];
-  const comp = composition(mode, n);
-  const lo = Math.ceil(n * 4 / 10), hi = Math.floor(n * 6 / 10);
-  let chosen = null, last = null;
-  for (let att = 0; att < 300; att++) {
-    let sel = [];
-    LEVEL_KEYS.forEach(lv => { if (comp[lv] > 0) sel = sel.concat(pickLevel(lv, comp[lv])); });
-    sel = shuffle(sel);
-    last = sel;
-    const t = sel.filter(q => q.jawaban).length;
-    if (t < lo || t > hi) continue;
-    if (maxRun(sel) > 3) continue;
-    chosen = sel;
-    break;
-  }
-  if (!chosen) chosen = last;
-  chosen.forEach(q => used.add(q.id));
-  saveUsed();
-  return { n: n, questions: chosen };
-}
-
-/* Skor: benar = 100 + bonus kecepatan (0..50); salah / waktu habis = 0 */
-function scoreFor(correct, limitSec, elapsedMs) {
-  if (!correct) return 0;
-  const rem = Math.max(0, limitSec - elapsedMs / 1000);
-  return 100 + Math.round(50 * rem / limitSec);
-}
-
-function predikat(pct) {
-  if (pct >= 90) return 'Luar Biasa';
-  if (pct >= 70) return 'Hebat';
-  if (pct >= 50) return 'Bagus, Terus Belajar';
-  return 'Ayo Coba Lagi';
-}
-
-/* Zona gerak: ambang dinamis, hysteresis 20%, tampilan selaras dengan logika */
-const SENS_K = { tinggi: 0.5, sedang: 0.7, rendah: 0.9 };
-function ambangFor(shoulderW, sens) {
-  const k = SENS_K[sens] || SENS_K.sedang;
-  return clamp(k * shoulderW, 0.10, 0.22);
-}
-/* zone: 'L' | 'C' | 'R'. rel = posisi pemain (sudah dicerminkan) dikurangi centerX */
-function nextZone(zone, rel, a) {
-  const back = a * 0.8;
-  if (zone === 'C') {
-    if (rel < -a) return 'L';
-    if (rel > a) return 'R';
-    return 'C';
-  }
-  if (zone === 'L') {
-    if (rel > a) return 'R';
-    if (rel > -back) return 'C';
-    return 'L';
-  }
-  if (rel < -a) return 'L';
-  if (rel < back) return 'C';
-  return 'R';
-}
-/* Posisi penanda di layar: tepat 50% saat di titik kalibrasi; tepi pita tengah (+-12%) saat melewati ambang */
-function toDisplayX(rel, a) {
-  return clamp(0.5 + rel * (0.12 / a), 0.02, 0.98);
-}
-
-/* ===== KAMERA, TAMPILAN, DAN ALUR PERMAINAN ===== */
-const $ = id => document.getElementById(id);
-const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-
-/* ---------- Status ---------- */
-let level = 'mudah', sens = 'sedang', pname = 'Pemain';
-let useCam = false, scr = 'home', paused = false, calActive = false, calReturn = 'start';
-let game = null;
-let stream = null, pl = null, modelPromise = null, lastVT = -1;
-let pos = null, buf = [], shW = null, detected = false, lostMs = 0, lastLM = null;
-let calibrated = false, centerX = 0.5, calW = 0.2;
-let zone = 'C', virtualZone = 'C';
-let gateMs = 0, answerMs = 0, holdMs = 0, holdZone = null, fbMs = 0;
-let calMs = 0, calSumX = 0, calSumW = 0, calN = 0;
-let cdMs = 0, cdLast = 4;
-let markerX = 0.5, lastTs = 0, debugOn = false, muted = false, ovDirty = false, lastKey = '';
-const curZone = () => (useCam ? zone : virtualZone);
-const ambang = () => ambangFor(calW, sens);
-
-const GATE_MS = 1000;   // wajib berdiri di tengah 1 detik
-const HOLD_MS = 300;    // bertahan di satu sisi 300 ms untuk mengunci jawaban
-const FEEDBACK_MS = 3000;
-const CAL_MS = 2000;
-const LOST_PAUSE_MS = 1500;
-
-/* ---------- Suara (Web Audio API) ---------- */
-let actx = null;
-function ac() {
-  if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { actx = null; } }
-  if (actx && actx.state === 'suspended') { try { actx.resume(); } catch (e) { /* abaikan */ } }
-  return actx;
-}
-function tone(f, t0, d, type, v) {
-  const a = ac();
-  if (!a || muted) return;
-  try {
-    const o = a.createOscillator(), g = a.createGain();
-    o.type = type || 'sine'; o.frequency.value = f;
-    const s = a.currentTime + t0, vol = v || 0.15;
-    g.gain.setValueAtTime(0.0001, s);
-    g.gain.exponentialRampToValueAtTime(vol, s + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, s + d);
-    o.connect(g); g.connect(a.destination);
-    o.start(s); o.stop(s + d + 0.05);
-  } catch (e) { /* abaikan */ }
-}
-const snd = {
-  ok() { tone(660, 0, 0.15); tone(880, 0.12, 0.28); },
-  no() { tone(300, 0, 0.2, 'sawtooth', 0.09); tone(200, 0.18, 0.32, 'sawtooth', 0.09); },
-  timeout() { tone(250, 0, 0.45, 'triangle', 0.12); },
-  tick() { tone(520, 0, 0.12, 'square', 0.07); },
-  go() { tone(880, 0, 0.4, 'square', 0.09); },
-  ready() { tone(740, 0, 0.12, 'sine', 0.12); },
-  end() { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.15, 0.32)); }
-};
-function setMuted(m) {
-  muted = m;
-  $('btnMuteH').textContent = muted ? '🔇 Suara: mati' : '🔊 Suara: hidup';
-  $('bMute').textContent = muted ? '🔇' : '🔊';
-}
-
-/* ---------- Layar dan overlay ---------- */
-const SCREENS = ['home', 'count', 'game', 'result'];
-function showScreen(name) { SCREENS.forEach(s => $(s).classList.toggle('on', s === name)); }
-function showOverlay(id, on) { $(id).classList.toggle('on', !!on); }
-
-/* ---------- Skor tertinggi ---------- */
-function loadBest(mode) { try { return JSON.parse(localStorage.getItem('pancasila_best_' + mode) || 'null'); } catch (e) { return null; } }
-function saveBest(mode, obj) { try { localStorage.setItem('pancasila_best_' + mode, JSON.stringify(obj)); } catch (e) { /* abaikan */ } }
-function refreshBest() {
-  const parts = ['mudah', 'sedang', 'campuran'].map(m => {
-    const b = loadBest(m);
-    return MODE_LABEL[m] + ': ' + (b ? b.skor + ' (' + esc(b.nama) + ')' : '-');
-  });
-  $('bestBox').innerHTML = '🏆 Skor tertinggi — ' + parts.join(' • ');
-}
-
-/* ---------- Kamera dan model pose ---------- */
-async function startCamera() {
-  if (stream) return;
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { const er = new Error('no media'); er.name = 'NoMediaDevices'; throw er; }
-  stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }, audio: false });
-  const cam = $('cam');
-  cam.srcObject = stream;
-  await new Promise(res => { if (cam.readyState >= 2) return res(); cam.onloadeddata = () => res(); });
-  try { await cam.play(); } catch (e) { /* abaikan */ }
-  document.body.classList.add('camon');
-}
-function stopCamera() {
-  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-  $('cam').srcObject = null;
-  document.body.classList.remove('camon');
-  calibrated = false; pos = null; buf = []; shW = null; detected = false; lastLM = null; lastVT = -1; lostMs = 0; zone = 'C';
-}
-
-const TASKS_VERSIONS = ['0.10.14', '0.10.21'];
-const MODEL_URL = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';
-async function loadModel() {
-  if (pl) return;
-  if (!modelPromise) {
-    modelPromise = (async () => {
-      let lastErr;
-      for (const v of TASKS_VERSIONS) {
-        try {
-          const base = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@' + v;
-          const mod = await import(base + '/vision_bundle.mjs');
-          const fileset = await mod.FilesetResolver.forVisionTasks(base + '/wasm');
-          const make = d => mod.PoseLandmarker.createFromOptions(fileset, {
-            baseOptions: { modelAssetPath: MODEL_URL, delegate: d },
-            runningMode: 'VIDEO', numPoses: 2,
-            minPoseDetectionConfidence: 0.5, minPosePresenceConfidence: 0.5, minTrackingConfidence: 0.5
-          });
-          try { pl = await make('GPU'); } catch (e) { pl = await make('CPU'); }
-          return;
-        } catch (e) { lastErr = e; console.warn('Gagal memuat MediaPipe ' + v, e); }
-      }
-      throw lastErr || new Error('model');
-    })().catch(e => { modelPromise = null; throw e; });
-  }
-  await modelPromise;
-}
-
-const vis = l => !!l && (l.visibility === undefined || l.visibility > 0.5);
-function detectPose() {
-  const cam = $('cam');
-  if (!pl || !stream || cam.readyState < 2) return;
-  if (cam.currentTime === lastVT) return;
-  lastVT = cam.currentTime;
-  let res;
-  try { res = pl.detectForVideo(cam, performance.now()); } catch (e) { return; }
-  processPose(res);
-}
-function processPose(res) {
-  const people = (res && res.landmarks) || [];
-  let best = null, bs = 0;
-  for (const lm of people) {
-    let size = 0;
-    if (vis(lm[11]) && vis(lm[12])) size = Math.abs(lm[11].x - lm[12].x);
-    else if (vis(lm[23]) && vis(lm[24])) size = Math.abs(lm[23].x - lm[24].x) * 0.9;
-    if (size > bs) { bs = size; best = lm; }       // ikuti orang yang tubuhnya paling besar
-  }
-  if (!best) { detected = false; lastLM = null; return; }
-  const xs = [11, 12, 23, 24].filter(i => vis(best[i])).map(i => best[i].x);
-  if (xs.length < 2) { detected = false; lastLM = null; return; }
-  const raw = 1 - xs.reduce((a, b) => a + b, 0) / xs.length;   // dicerminkan: kanan tubuh = kanan layar
-  buf.push(raw); if (buf.length > 5) buf.shift();
-  const m = median(buf);
-  pos = (pos === null) ? m : pos + 0.4 * (m - pos);            // median 5 frame lalu EMA alpha 0,4
-  if (vis(best[11]) && vis(best[12])) {
-    const w = Math.abs(best[11].x - best[12].x);
-    shW = (shW === null) ? w : shW * 0.8 + w * 0.2;
-  }
-  detected = true; lastLM = best;
-  if (calibrated && !calActive) zone = nextZone(zone, pos - centerX, ambang());
-}
-
-/* ---------- Kalibrasi ---------- */
-function beginCalibration(ret) {
-  calActive = true; calReturn = ret;
-  calMs = 0; calSumX = 0; calSumW = 0; calN = 0;
-  $('calFill').style.width = '0%';
-  $('calMsg').textContent = 'Berdiri di tengah kamera…';
-  showOverlay('pauseOv', false);
-  showOverlay('calib', true);
-}
-function calTick(dt) {
-  let msg, ok = false;
-  if (!detected || pos === null) msg = 'Belum terlihat. Berdiri di depan kamera.';
-  else if (Math.abs(pos - 0.5) > 0.2) msg = 'Geser ke tengah layar kamera.';
-  else if (shW === null || shW < 0.06) msg = 'Mundur sedikit agar bahu dan pinggul terlihat.';
-  else if (shW > 0.45) msg = 'Terlalu dekat. Mundur sedikit.';
-  else { ok = true; msg = 'Bagus! Tahan posisi ini…'; }
-  if (ok) { calMs += dt; calSumX += pos; calSumW += shW; calN++; }
-  else { calMs = 0; calSumX = 0; calSumW = 0; calN = 0; }
-  $('calMsg').textContent = msg;
-  $('calFill').style.width = Math.min(100, calMs / CAL_MS * 100) + '%';
-  if (calMs >= CAL_MS && calN > 0) {
-    centerX = calSumX / calN; calW = calSumW / calN;
-    calibrated = true; zone = 'C'; calActive = false;
-    showOverlay('calib', false);
-    snd.ready();
-    if (calReturn === 'start') gotoCountdown();
-    else { holdMs = 0; holdZone = null; }
-  }
-}
-
-/* ---------- Alur: mulai, hitung mundur, bermain ---------- */
-function newGame() {
-  const b = buildGame(level);
-  return { n: b.n, questions: b.questions, idx: 0, score: 0, results: [], gs: 'GATE' };
-}
-function beginGame(camMode) {
-  ac();
-  pname = ($('pname').value || '').trim() || 'Pemain';
-  useCam = camMode;
-  game = newGame();
-  launch();
-}
-function camErrMsg(e) {
-  const n = e && e.name;
-  if (n === 'NotAllowedError' || n === 'SecurityError') return 'Izin kamera ditolak atau kamera tidak dapat diakses. Izinkan kamera lewat ikon gembok di kolom alamat browser, dan pastikan halaman dibuka lewat HTTPS atau localhost.';
-  if (n === 'NotFoundError' || n === 'OverconstrainedError') return 'Kamera tidak ditemukan. Sambungkan webcam, lalu coba lagi.';
-  if (n === 'NotReadableError') return 'Kamera sedang dipakai aplikasi lain. Tutup aplikasi itu, lalu coba lagi.';
-  if (n === 'NoMediaDevices') return 'Browser ini tidak mendukung kamera, atau halaman tidak dibuka lewat HTTPS atau localhost.';
-  return 'Kamera tidak dapat dinyalakan.';
-}
-function showErr(msg) {
-  $('errMsg').textContent = msg + ' Kamu tetap bisa bermain dengan Mode Tanpa Kamera.';
-  showOverlay('err', true);
-}
-async function launch() {
-  if (!useCam) { stopCamera(); gotoCountdown(); return; }
-  scr = 'prep'; showScreen(null);
-  $('calMsg').textContent = 'Menyalakan kamera…';
-  $('calFill').style.width = '0%';
-  showOverlay('calib', true);
-  try { await startCamera(); }
-  catch (e) {
-    if (scr !== 'prep') return;
-    showOverlay('calib', false); stopCamera(); showErr(camErrMsg(e)); return;
-  }
-  if (scr !== 'prep') { stopCamera(); return; }
-  $('calMsg').textContent = 'Memuat sensor gerak… (butuh internet, mohon tunggu)';
-  try { await loadModel(); }
-  catch (e) {
-    console.error(e);
-    if (scr !== 'prep') return;
-    showOverlay('calib', false); stopCamera();
-    showErr('Sensor gerak gagal dimuat. Pastikan perangkat tersambung ke internet.');
-    return;
-  }
-  if (scr !== 'prep') return;
-  if (calibrated) { showOverlay('calib', false); gotoCountdown(); }
-  else beginCalibration('start');
-}
-function gotoCountdown() {
-  scr = 'count'; showScreen('count');
-  cdMs = 0; cdLast = 4;
-  $('cdInfo').textContent = 'Kali ini ada ' + game.n + ' soal!';
-}
-function cdTick(dt) {
-  cdMs += dt;
-  const num = 3 - Math.floor(cdMs / 1000);
-  if (num !== cdLast && num >= 1) { cdLast = num; $('cdNum').textContent = String(num); snd.tick(); }
-  if (cdMs >= 3000) { snd.go(); startPlay(); }
-}
-function startPlay() {
-  scr = 'game'; paused = false; calActive = false;
-  showScreen('game');
-  virtualZone = 'C';
-  $('kbBtns').style.display = useCam ? 'none' : 'flex';
-  $('bRecal').style.display = useCam ? '' : 'none';
-  $('bDebug').style.display = useCam ? '' : 'none';
-  game.gs = 'GATE';
-  setGateUI();
-}
-function setGateUI() {
-  const g = game;
-  $('gNum').textContent = 'Soal ' + (g.idx + 1) + ' dari ' + g.n;
-  $('qGate').style.display = 'flex'; $('qMain').style.display = 'none'; $('qFb').style.display = 'none';
-  $('hQ').textContent = (g.idx + 1) + '/' + g.n;
-  $('hS').textContent = String(g.score);
-  clearStamps();
-  gateMs = 0; lastKey = '';
-}
-function clearStamps() { document.querySelectorAll('.stamp').forEach(s => s.classList.remove('show')); }
-function enterAnswer() {
-  const g = game, q = g.questions[g.idx];
-  g.gs = 'ANSWER'; answerMs = 0; holdMs = 0; holdZone = null;
-  $('qTopik').textContent = q.topik;
-  $('qLevel').textContent = LEVELS[q.level].label;
-  $('qText').textContent = q.pernyataan;
-  $('qGate').style.display = 'none'; $('qMain').style.display = 'block'; $('qTimer').style.display = 'block'; $('qFb').style.display = 'none';
-  lastKey = '';
-}
-
-function gameTick(dt) {
-  const g = game;
-  if (g.gs === 'GATE') {
-    // gerbang tengah: soal belum tampil, tidak ada jawaban yang diterima
-    const okC = curZone() === 'C' && (!useCam || lostMs < 300);
-    gateMs = okC ? gateMs + dt : 0;
-    if (gateMs >= GATE_MS) { snd.ready(); enterAnswer(); }
-  } else if (g.gs === 'ANSWER') {
-    if (useCam && lostMs > LOST_PAUSE_MS) return;      // pemain hilang: waktu dijeda
-    const q = g.questions[g.idx], limit = LEVELS[q.level].limit * 1000;
-    answerMs += dt;
-    const z = curZone();
-    if (z === 'C') { holdMs = 0; holdZone = null; }
-    else if (z !== holdZone) { holdZone = z; holdMs = 0; }
-    else if (!useCam || lostMs < 300) holdMs += dt;
-    if (holdMs >= HOLD_MS) lockAnswer(z);
-    else if (answerMs >= limit) timeUp();
-  } else if (g.gs === 'FEEDBACK') {
-    fbMs += dt;
-    if (fbMs >= FEEDBACK_MS) nextQuestion();
-  }
-}
-function lockAnswer(z) {
-  const g = game, q = g.questions[g.idx];
-  const choice = (z === 'R');                           // kanan = BENAR, kiri = SALAH
-  const correct = (choice === q.jawaban);
-  const pts = scoreFor(correct, LEVELS[q.level].limit, answerMs);
-  g.score += pts;
-  const r = { q: q, choice: choice, correct: correct, points: pts, ms: answerMs, timeout: false };
-  g.results.push(r);
-  g.gs = 'FEEDBACK'; fbMs = 0;
-  showFeedback(r);
-  if (correct) snd.ok(); else snd.no();
-}
-function timeUp() {
-  const g = game, q = g.questions[g.idx];
-  const r = { q: q, choice: null, correct: false, points: 0, ms: LEVELS[q.level].limit * 1000, timeout: true };
-  g.results.push(r);
-  g.gs = 'FEEDBACK'; fbMs = 0;
-  showFeedback(r);
-  snd.timeout();
-}
-function showFeedback(r) {
-  const q = r.q, head = $('fbHead');
-  $('qTimer').style.display = 'none';
-  $('qFb').style.display = 'block';
-  if (r.timeout) { head.className = 'no'; head.textContent = '⏰ Waktu habis!  +0 poin'; }
-  else if (r.correct) { head.className = 'ok'; head.textContent = '✓ Jawabanmu benar!  +' + r.points + ' poin'; }
-  else { head.className = 'no'; head.textContent = '✗ Jawabanmu kurang tepat.  +0 poin'; }
-  $('fbSub').textContent = 'Pernyataan itu ' + (q.jawaban ? 'BENAR' : 'SALAH') + '.';
-  $('fbExp').textContent = q.penjelasan;
-  $('hS').textContent = String(game.score);
-  if (!r.timeout) {
-    const st = $(r.choice ? 'zoneR' : 'zoneL').querySelector('.stamp');
-    st.textContent = r.correct ? '✓' : '✗';
-    st.classList.add('show');
-  }
-  if (r.correct) {
-    const p = $('plus');
-    p.textContent = '+' + r.points;
-    p.classList.remove('go'); void p.offsetWidth; p.classList.add('go');
-  }
-}
-function nextQuestion() {
-  const g = game;
-  g.idx++;
-  if (g.idx >= g.n) { finishGame(); return; }
-  g.gs = 'GATE';
-  setGateUI();            // wajib kembali ke tengah dulu
-}
-
-/* ---------- Hasil akhir ---------- */
-function finishGame() {
-  scr = 'result'; paused = false;
-  showOverlay('pauseOv', false);
-  showScreen('result');
-  snd.end();
-  const g = game, n = g.n, R = g.results;
-  const nb = R.filter(r => r.correct).length, ns = n - nb;
-  const maxS = n * MAX_PER_Q, pct = nb / n * 100;
-  const avg = R.reduce((a, r) => a + r.ms, 0) / n / 1000;
-  const topics = {};
-  R.forEach(r => { const t = topics[r.q.topik] = topics[r.q.topik] || { b: 0, t: 0 }; t.t++; if (r.correct) t.b++; });
-  const prev = loadBest(level);
-  let isNew = false;
-  if (!prev || g.score > prev.skor) { saveBest(level, { skor: g.score, nama: pname }); isNew = true; }
-
-  let h = '';
-  h += '<h1>🎉 Permainan Selesai!</h1>';
-  h += '<div style="font-weight:800">' + esc(pname) + ' • Tingkat ' + esc(MODE_LABEL[level]) + ' • ' + n + ' soal</div>';
-  h += '<div class="pred">' + esc(predikat(pct)) + '</div>';
-  h += '<div class="skor">' + g.score + '</div>';
-  h += '<div class="skormax">dari skor maksimal ' + maxS + (isNew ? ' • 🏆 Skor tertinggi baru!' : '') + '</div>';
-  h += '<div class="stats">';
-  h += '<div class="stat"><b>' + nb + '</b>Benar</div>';
-  h += '<div class="stat"><b>' + ns + '</b>Salah / waktu habis</div>';
-  h += '<div class="stat"><b>' + Math.round(pct) + '%</b>Ketepatan</div>';
-  h += '<div class="stat"><b>' + avg.toFixed(1) + ' dtk</b>Rata-rata waktu menjawab</div>';
-  h += '</div>';
-  h += '<div class="sec"><h3>Ketepatan per topik</h3>';
-  Object.keys(topics).forEach(name => {
-    const t = topics[name], p = Math.round(t.b / t.t * 100);
-    h += '<div class="trow"><span class="nm">' + esc(name) + '</span><span class="bar"><i style="width:' + p + '%"></i></span><span class="pc">' + t.b + '/' + t.t + '</span></div>';
-  });
-  h += '</div>';
-  const wrong = R.filter(r => !r.correct);
-  h += '<div class="sec"><h3>Tinjau soal yang belum tepat</h3>';
-  if (!wrong.length) h += '<div class="rev" style="border-color:#1b9e4b">Hebat! Semua jawabanmu benar. 👏</div>';
-  wrong.forEach(r => {
-    h += '<div class="rev">' + esc(r.q.pernyataan) +
-      '<br><b>Pernyataan itu ' + (r.q.jawaban ? 'BENAR' : 'SALAH') + '.</b> ' +
-      '<small>' + (r.timeout ? 'Kamu belum menjawab (waktu habis).' : 'Jawabanmu: ' + (r.choice ? 'BENAR' : 'SALAH') + '.') + '</small>' +
-      '<br><small>' + esc(r.q.penjelasan) + '</small></div>';
-  });
-  h += '</div>';
-  h += '<div class="btnrow">';
-  h += '<button class="big" data-act="again">🔁 Main Lagi</button>';
-  h += '<button class="alt" data-act="level">Ganti Tingkat</button>';
-  if (useCam) h += '<button class="alt" data-act="recal">🎯 Kalibrasi Ulang</button>';
-  h += '<button class="alt" data-act="home">🏠 Beranda</button>';
-  h += '</div>';
-  $('resBox').innerHTML = h;
-  $('result').scrollTop = 0;
-  makeConfetti(pct >= 70);
-}
-function makeConfetti(on) {
-  const box = $('confetti');
-  box.innerHTML = '';
-  if (!on) return;
-  const cols = ['#d62828', '#f4b400', '#1b9e4b', '#ffffff', '#2a6fdb'];
-  for (let i = 0; i < 70; i++) {
-    const d = document.createElement('div');
-    d.className = 'conf';
-    d.style.left = (Math.random() * 100) + '%';
-    d.style.background = cols[i % cols.length];
-    d.style.animationDuration = (2.5 + Math.random() * 3) + 's';
-    d.style.animationDelay = (Math.random() * 1.5) + 's';
-    box.appendChild(d);
-  }
-}
-function playAgain() {
-  game = newGame();         // acak ulang jumlah soal, isi soal, dan urutan
-  launch();
-}
-function goHome() {
-  scr = 'home'; paused = false; calActive = false; game = null; useCam = false;
-  stopCamera();
-  ['calib', 'err', 'pauseOv'].forEach(id => showOverlay(id, false));
-  showScreen('home');
-  refreshBest();
-}
-
-/* ---------- Gambar overlay kamera (kerangka tubuh dan garis debug) ---------- */
-const CONN = [[11, 12], [11, 23], [12, 24], [23, 24], [11, 13], [13, 15], [12, 14], [14, 16], [23, 25], [25, 27], [24, 26], [26, 28]];
-function drawOverlay() {
-  const c = $('ov'), ctx = c.getContext('2d');
-  const want = useCam && (calActive || (debugOn && scr === 'game'));
-  if (!want) { if (ovDirty) { ctx.clearRect(0, 0, c.width, c.height); ovDirty = false; } return; }
-  if (c.width !== window.innerWidth || c.height !== window.innerHeight) { c.width = window.innerWidth; c.height = window.innerHeight; }
-  ctx.clearRect(0, 0, c.width, c.height); ovDirty = true;
-  const cam = $('cam'), vw = cam.videoWidth || 640, vh = cam.videoHeight || 480;
-  const sc = Math.max(c.width / vw, c.height / vh), dw = vw * sc, dh = vh * sc;
-  const ox = (c.width - dw) / 2, oy = (c.height - dh) / 2;
-  const X = xm => ox + xm * dw, Y = y => oy + y * dh;
-  if (debugOn && calibrated && scr === 'game') {
-    const a = ambang();
-    ctx.lineWidth = 2;
-    [[centerX, '#ffffff'], [centerX - a, '#ff5a5a'], [centerX + a, '#5aff8a']].forEach(p => {
-      ctx.strokeStyle = p[1]; ctx.beginPath(); ctx.moveTo(X(p[0]), 0); ctx.lineTo(X(p[0]), c.height); ctx.stroke();
-    });
-  }
-  if (lastLM && detected) {
-    ctx.lineWidth = 4; ctx.strokeStyle = '#00e5ff'; ctx.fillStyle = '#ffeb3b';
-    CONN.forEach(p => {
-      const a = lastLM[p[0]], b = lastLM[p[1]];
-      if (vis(a) && vis(b)) { ctx.beginPath(); ctx.moveTo(X(1 - a.x), Y(a.y)); ctx.lineTo(X(1 - b.x), Y(b.y)); ctx.stroke(); }
-    });
-    [11, 12, 23, 24].forEach(i => {
-      const l = lastLM[i];
-      if (vis(l)) { ctx.beginPath(); ctx.arc(X(1 - l.x), Y(l.y), 7, 0, Math.PI * 2); ctx.fill(); }
-    });
-  }
-}
-
-/* ---------- Render per frame ---------- */
-function render() {
-  drawOverlay();
-  if (scr !== 'game' || !game) return;
-  const g = game, gs = g.gs, z = curZone();
-  // penanda posisi pemain (selaras dengan logika zona)
-  let target = 0.5, op = 1;
-  if (useCam) {
-    if (calibrated && pos !== null) target = toDisplayX(pos - centerX, ambang());
-    op = (detected || lostMs < 300) ? 1 : 0.35;
-  } else {
-    target = (virtualZone === 'L') ? 0.2 : (virtualZone === 'R') ? 0.8 : 0.5;
-  }
-  markerX += (target - markerX) * 0.35;
-  const mk = $('marker');
-  mk.style.left = (markerX * 100) + '%';
-  mk.style.opacity = String(op);
-  // sorotan sisi dan status
-  const key = gs + '|' + (gs === 'ANSWER' ? z : '') + '|' + (z === 'C');
-  if (key !== lastKey) {
-    lastKey = key;
-    const gm = $('game');
-    gm.classList.toggle('gs-gate', gs === 'GATE');
-    gm.classList.toggle('hotL', gs === 'ANSWER' && z === 'L');
-    gm.classList.toggle('hotR', gs === 'ANSWER' && z === 'R');
-    $('band').classList.toggle('ok', z === 'C');
-  }
-  if (gs === 'GATE') {
-    $('ringFg').style.strokeDashoffset = String(264 * (1 - Math.min(1, gateMs / GATE_MS)));
-  } else if (gs === 'ANSWER') {
-    const q = g.questions[g.idx], limit = LEVELS[q.level].limit * 1000;
-    const frac = clamp(1 - answerMs / limit, 0, 1);
-    const tf = $('tFill');
-    tf.style.width = (frac * 100) + '%';
-    tf.style.background = frac > 0.5 ? '#1b9e4b' : frac > 0.25 ? '#f4b400' : '#d62828';
-    $('tLabel').textContent = 'Sisa waktu: ' + Math.ceil(frac * limit / 1000) + ' dtk';
-  }
-  $('lostMsg').style.display = (useCam && lostMs > LOST_PAUSE_MS && (gs === 'GATE' || gs === 'ANSWER')) ? 'block' : 'none';
-}
-
-/* ---------- Loop utama ---------- */
-function frame(ts) {
-  requestAnimationFrame(frame);
-  const dt = Math.min(100, lastTs ? ts - lastTs : 16);
-  lastTs = ts;
-  if (useCam && (scr === 'prep' || scr === 'count' || scr === 'game')) {
-    detectPose();
-    if (detected) lostMs = 0; else lostMs += dt;
-    if (lostMs > 1000) { buf = []; pos = null; shW = null; }
-  }
-  if (calActive) calTick(dt);
-  else if (scr === 'count') cdTick(dt);
-  else if (scr === 'game' && game && !paused) gameTick(dt);
-  render();
-}
-
-/* ---------- Kontrol dan pendengar peristiwa ---------- */
-function bindSeg(id, cb) {
-  $(id).addEventListener('click', e => {
-    const b = e.target.closest('button');
-    if (!b) return;
-    $(id).querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
-    cb(b.dataset.v);
-  });
-}
-function syncSensUI() {
-  $('hSens').value = sens;
-  $('segSens').querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.v === sens));
-}
-bindSeg('segLevel', v => { level = v; });
-bindSeg('segSens', v => { sens = v; syncSensUI(); });
-$('hSens').addEventListener('change', e => { sens = e.target.value; syncSensUI(); });
-
-function toggleFs() {
-  try {
-    if (document.fullscreenElement) document.exitFullscreen();
-    else document.documentElement.requestFullscreen();
-  } catch (e) { /* abaikan */ }
-}
-function togglePause() {
-  if (scr !== 'game' || calActive) return;
-  paused = !paused;
-  showOverlay('pauseOv', paused);
-}
-
-$('btnStart').addEventListener('click', () => beginGame(true));
-$('btnNoCam').addEventListener('click', () => beginGame(false));
-$('btnFsH').addEventListener('click', toggleFs);
-$('bFs').addEventListener('click', toggleFs);
-$('btnMuteH').addEventListener('click', () => setMuted(!muted));
-$('bMute').addEventListener('click', () => setMuted(!muted));
-$('bDebug').addEventListener('click', () => { debugOn = !debugOn; });
-$('bPause').addEventListener('click', togglePause);
-$('pauseGo').addEventListener('click', togglePause);
-$('bRecal').addEventListener('click', () => {
-  if (scr !== 'game' || !useCam || calActive) return;
-  paused = false;
-  beginCalibration('resume');
-});
-$('bHome').addEventListener('click', () => {
-  if (window.confirm('Kembali ke beranda? Permainan akan dihentikan.')) goHome();
-});
-$('calCancel').addEventListener('click', () => {
-  if (calReturn === 'start') goHome();
-  else { calActive = false; showOverlay('calib', false); }
-});
-$('errNoCam').addEventListener('click', () => {
-  showOverlay('err', false);
-  useCam = false;
-  if (!game) game = newGame();
-  launch();
-});
-$('errBack').addEventListener('click', () => { showOverlay('err', false); goHome(); });
-$('result').addEventListener('click', e => {
-  const b = e.target.closest('button[data-act]');
-  if (!b) return;
-  const act = b.dataset.act;
-  if (act === 'again') playAgain();
-  else if (act === 'recal') { calibrated = false; playAgain(); }
-  else goHome();            // 'level' dan 'home' kembali ke beranda
-});
-
-['kbL', 'kbC', 'kbR'].forEach(id => {
-  $(id).addEventListener('pointerdown', () => {
-    if (useCam || scr !== 'game' || paused) return;
-    virtualZone = (id === 'kbL') ? 'L' : (id === 'kbR') ? 'R' : 'C';
-  });
-});
-document.addEventListener('keydown', e => {
-  if (scr !== 'game') return;
-  if (e.key === 'p' || e.key === 'P') { togglePause(); return; }
-  if (useCam || paused || calActive) return;
-  if (e.key === 'ArrowLeft') { virtualZone = 'L'; e.preventDefault(); }
-  else if (e.key === 'ArrowRight') { virtualZone = 'R'; e.preventDefault(); }
-  else if (e.key === 'ArrowDown' || e.key === ' ') { virtualZone = 'C'; e.preventDefault(); }
-});
-
-refreshBest();
-requestAnimationFrame(frame);
-
-</script>
-</body>
-</html>
+        /* ==========================================================================
+           2. STATE SISTEM GAME & MANAJEMEN SOUND (WebAudio API)
+           ========================================================================== */
